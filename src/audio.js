@@ -1,7 +1,7 @@
 import "./style.css";
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024;
-const MAX_DURATION_SECONDS = 15 * 60;
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_DURATION_SECONDS = 5 * 60;
 const OUTPUT_SAMPLE_RATE = 44100;
 
 const fileInput = document.querySelector("#audio-input");
@@ -48,11 +48,11 @@ async function loadAudio(file) {
   player.load();
 
   if (file.size > MAX_FILE_SIZE) {
-    diagnosis.textContent = "File lebih dari 25 MB. Untuk mencegah browser kehabisan memori, pemeriksaan dan konversi perlu aplikasi desktop.";
+    diagnosis.textContent = "File lebih dari 50 MB. Untuk mencegah browser kehabisan memori, pemeriksaan dan konversi perlu aplikasi desktop.";
     sampleRateOutput.textContent = "Belum diperiksa";
     channelsOutput.textContent = "Belum diperiksa";
     durationOutput.textContent = "Belum diperiksa";
-    showMessage("File terlalu besar untuk dikonversi dengan aman di browser (maksimum 25 MB).", "error");
+    showMessage("File terlalu besar untuk dikonversi dengan aman di browser (maksimum 50 MB).", "error");
     return;
   }
 
@@ -69,11 +69,11 @@ async function loadAudio(file) {
   if (mediaDuration !== null) {
     durationOutput.textContent = formatDuration(mediaDuration);
     if (mediaDuration > MAX_DURATION_SECONDS) {
-      diagnosis.textContent = "Durasi lebih dari 15 menit. Untuk mencegah browser kehabisan memori, gunakan aplikasi konverter desktop.";
+      diagnosis.textContent = "Durasi lebih dari 5 menit. Untuk mencegah browser kehabisan memori, gunakan aplikasi konverter desktop.";
       sampleRateOutput.textContent = "Belum diperiksa";
       channelsOutput.textContent = "Belum diperiksa";
       progressPanel.hidden = true;
-      showMessage("Durasi file lebih dari 15 menit; konversi di browser dibatasi untuk melindungi memori perangkat.", "error");
+      showMessage("Durasi file lebih dari 5 menit; konversi di browser dibatasi untuk melindungi memori perangkat.", "error");
       return;
     }
   }
@@ -137,7 +137,7 @@ async function convertToMp3() {
     const sourceBuffer = await context.decodeAudioData(await file.arrayBuffer());
     if (currentFile !== file) return;
     if (sourceBuffer.duration > MAX_DURATION_SECONDS) {
-      throw new Error("Durasi lebih dari 15 menit. Untuk menghindari penggunaan memori berlebihan, gunakan aplikasi konverter desktop.");
+      throw new Error("Durasi lebih dari 5 menit. Untuk menghindari penggunaan memori berlebihan, gunakan aplikasi konverter desktop.");
     }
 
     progressLabel.textContent = "Mengubah sample rate...";
