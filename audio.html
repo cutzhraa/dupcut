@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Periksa file audio dan ubah ke MP3 yang lebih kompatibel, langsung di browser."
+    />
+    <meta name="theme-color" content="#f6f7f4" />
+    <title>DupCut — Perbaiki kompatibilitas audio</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="DupCut beranda">
+          <span class="brand-mark" aria-hidden="true">d.</span>
+          <span>dupcut</span>
+        </a>
+        <nav class="page-nav" aria-label="Halaman DupCut">
+          <a class="page-nav-link" href="/">Pilah file</a>
+          <a class="page-nav-link" href="/rename.html">Rename</a>
+          <a class="page-nav-link page-nav-active" href="/audio.html" aria-current="page">Audio</a>
+        </nav>
+        <span class="privacy-pill"><span></span> Privat di perangkat kamu</span>
+      </header>
+
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">CEK KOMPATIBILITAS FILE AUDIO</p>
+        <h1 id="page-title">Biar lagu kamu<br /><span>lebih cocok buat speaker.</span></h1>
+        <p class="intro-copy">
+            Cek apakah browser bisa membaca file, lihat info audionya, lalu ubah
+          ke MP3 44.1 kHz yang umum didukung speaker USB. Semua diproses lokal.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Pemeriksa dan konverter audio">
+        <label class="picker-card audio-picker" for="audio-input">
+          <span class="picker-icon" aria-hidden="true">♫</span>
+          <span class="picker-title">Pilih file audio</span>
+          <span class="picker-hint">MP3, WAV, M4A, AAC, OGG, FLAC (tergantung dukungan browser)</span>
+          <span class="picker-action">Pilih file <span aria-hidden="true">→</span></span>
+        </label>
+        <input
+          id="audio-input"
+          class="visually-hidden"
+          type="file"
+          accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.wma"
+        />
+
+        <section id="audio-details" class="audio-details" hidden aria-live="polite">
+          <div class="audio-file-heading">
+            <div>
+              <p class="eyebrow">FILE TERPILIH</p>
+              <h2 id="audio-file-name"></h2>
+            </div>
+            <button id="replace-audio" class="text-button" type="button">Pilih file lain</button>
+          </div>
+          <audio id="audio-player" class="audio-player" controls></audio>
+          <div class="audio-facts">
+            <div><span>Ukuran</span><strong id="audio-size">—</strong></div>
+            <div><span>Durasi</span><strong id="audio-duration">—</strong></div>
+            <div><span>Browser decode rate</span><strong id="audio-sample-rate">—</strong></div>
+            <div><span>Channel</span><strong id="audio-channels">—</strong></div>
+            <div><span>Ekstensi</span><strong id="audio-extension">—</strong></div>
+          </div>
+          <p id="audio-diagnosis" class="result-note"></p>
+          <div class="conversion-options">
+            <label class="field-label" for="audio-bitrate">
+              Kualitas MP3
+              <select id="audio-bitrate" class="text-input">
+                <option value="128">128 kbps · paling kompatibel</option>
+                <option value="192">192 kbps · kualitas lebih tinggi</option>
+                <option value="320">320 kbps · ukuran lebih besar</option>
+              </select>
+            </label>
+            <button id="convert-button" class="button button-primary" type="button">
+              Konversi ke MP3
+            </button>
+          </div>
+          <p class="output-hint">
+            Hasil akan diunduh ke perangkat. File asli tidak berubah. Konversi
+            mengubah codec dan sample rate, tapi tidak memperbaiki kualitas
+            rekaman yang sudah buruk.
+          </p>
+        </section>
+
+        <div id="audio-progress-panel" class="progress-panel" hidden aria-live="polite">
+          <div class="progress-heading">
+            <span id="audio-progress-label">Membaca audio...</span>
+            <span id="audio-progress-count"></span>
+          </div>
+          <div class="progress-track" role="progressbar" aria-label="Progres konversi audio" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="audio-progress-fill"></span>
+          </div>
+        </div>
+        <p id="audio-message" class="message" role="status" hidden></p>
+      </section>
+
+      <footer class="footnotes">
+        <div class="footnote">
+          <span class="footnote-number">01</span>
+          <p><strong>Coba putar dulu</strong><br />Kalau browser gagal membaca, codec mungkin tidak didukung.</p>
+        </div>
+        <div class="footnote">
+          <span class="footnote-number">02</span>
+          <p><strong>MP3 standar</strong><br />44.1 kHz, stereo, bitrate pilihan kamu.</p>
+        </div>
+        <div class="footnote">
+          <span class="footnote-number">03</span>
+          <p><strong>Tidak selalu menjamin</strong><br />Format USB dan dukungan speaker juga berpengaruh.</p>
+        </div>
+      </footer>
+      <p class="browser-note">
+        Berkas sampai 25 MB dan berdurasi maksimal 15 menit didukung untuk konversi di browser.
+        Audio yang lebih besar atau format langka mungkin perlu aplikasi konverter desktop.
+      </p>
+    </main>
+    <script type="module" src="/src/audio.js"></script>
+  </body>
+</html>

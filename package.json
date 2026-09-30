@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@breezystack/lamejs": "^1.2.7",
     "hash-wasm": "^4.12.0"
   },
   "devDependencies": {

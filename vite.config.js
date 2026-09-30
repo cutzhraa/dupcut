@@ -6,6 +6,7 @@ export default defineConfig({
       input: {
         main: "index.html",
         rename: "rename.html",
+        audio: "audio.html",
       },
     },
   },

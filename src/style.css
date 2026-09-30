@@ -751,6 +751,91 @@ h2 {
   margin-top: 16px;
 }
 
+.audio-picker {
+  max-width: 480px;
+  min-height: 190px;
+  margin: 0 auto;
+}
+
+.audio-details {
+  margin-top: 25px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.audio-file-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.audio-file-heading .eyebrow {
+  margin-bottom: 7px;
+}
+
+.audio-file-heading h2 {
+  max-width: 650px;
+  overflow-wrap: anywhere;
+  font-size: 17px;
+}
+
+.audio-player {
+  width: 100%;
+  height: 42px;
+  margin-top: 18px;
+}
+
+.audio-facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 17px;
+}
+
+.audio-facts div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #e8ebe6;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.audio-facts span {
+  color: #7d867e;
+  font-size: 10px;
+}
+
+.audio-facts strong {
+  overflow: hidden;
+  color: #465148;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversion-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 13px;
+  margin-top: 20px;
+}
+
+.conversion-options .button {
+  min-width: 190px;
+}
+
+.conversion-options + .output-hint {
+  margin-top: 12px;
+}
+
+.audio-details .result-note {
+  margin: 14px 0 0;
+}
+
 @media (max-width: 640px) {
   .shell {
     width: min(100% - 28px, 500px);
@@ -774,8 +859,24 @@ h2 {
   }
 
   .page-nav-link {
-    padding: 7px 8px;
-    font-size: 10px;
+    padding: 7px 5px;
+    font-size: 9px;
+  }
+
+  .brand {
+    gap: 5px;
+    font-size: 16px;
+  }
+
+  .brand-mark {
+    width: 25px;
+    height: 25px;
+  }
+
+  .privacy-pill {
+    gap: 6px;
+    padding: 6px 7px;
+    font-size: 8px;
   }
 
   .intro {
@@ -856,5 +957,17 @@ h2 {
     gap: 5px;
     padding-inline: 8px;
     font-size: 9px;
+  }
+
+  .audio-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .conversion-options {
+    grid-template-columns: 1fr;
+  }
+
+  .conversion-options .button {
+    width: 100%;
   }
 }
