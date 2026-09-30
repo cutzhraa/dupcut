@@ -1,8 +1,9 @@
 import "./style.css";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const MAX_DURATION_SECONDS = 5 * 60;
+const MAX_DURATION_SECONDS = 10 * 60;
 const OUTPUT_SAMPLE_RATE = 44100;
+const ENCODER_CHUNK_FRAMES = 1152 * 32;
 
 const fileInput = document.querySelector("#audio-input");
 const details = document.querySelector("#audio-details");
@@ -69,11 +70,11 @@ async function loadAudio(file) {
   if (mediaDuration !== null) {
     durationOutput.textContent = formatDuration(mediaDuration);
     if (mediaDuration > MAX_DURATION_SECONDS) {
-      diagnosis.textContent = "Durasi lebih dari 5 menit. Untuk mencegah browser kehabisan memori, gunakan aplikasi konverter desktop.";
+      diagnosis.textContent = "Durasi lebih dari 10 menit. Untuk mencegah browser kehabisan memori, gunakan aplikasi konverter desktop.";
       sampleRateOutput.textContent = "Belum diperiksa";
       channelsOutput.textContent = "Belum diperiksa";
       progressPanel.hidden = true;
-      showMessage("Durasi file lebih dari 5 menit; konversi di browser dibatasi untuk melindungi memori perangkat.", "error");
+      showMessage("Durasi file lebih dari 10 menit; konversi di browser dibatasi untuk melindungi memori perangkat.", "error");
       return;
     }
   }
@@ -137,7 +138,7 @@ async function convertToMp3() {
     const sourceBuffer = await context.decodeAudioData(await file.arrayBuffer());
     if (currentFile !== file) return;
     if (sourceBuffer.duration > MAX_DURATION_SECONDS) {
-      throw new Error("Durasi lebih dari 5 menit. Untuk menghindari penggunaan memori berlebihan, gunakan aplikasi konverter desktop.");
+      throw new Error("Durasi lebih dari 10 menit. Untuk menghindari penggunaan memori berlebihan, gunakan aplikasi konverter desktop.");
     }
 
     progressLabel.textContent = "Mengubah sample rate...";
@@ -153,10 +154,8 @@ async function convertToMp3() {
     const normalizedBuffer = await offline.startRendering();
 
     progressLabel.textContent = "Membuat file MP3...";
-    const left = new Float32Array(normalizedBuffer.getChannelData(0));
-    const right = new Float32Array(normalizedBuffer.getChannelData(1));
-    const outputBuffer = await encodeMp3InWorker(left, right, bitrate);
-    const outputBlob = new Blob([outputBuffer], { type: "audio/mpeg" });
+    const parts = await encodeMp3InWorker(normalizedBuffer, bitrate);
+    const outputBlob = new Blob(parts, { type: "audio/mpeg" });
     const outputUrl = URL.createObjectURL(outputBlob);
     const link = document.createElement("a");
     link.href = outputUrl;
@@ -213,32 +212,67 @@ function readMediaDuration(audioElement) {
   });
 }
 
-function encodeMp3InWorker(left, right, bitrate) {
+function encodeMp3InWorker(audioBuffer, bitrate) {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./mp3.worker.js", import.meta.url), { type: "module" });
+    const parts = [];
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      worker.terminate();
+      callback(value);
+    };
+
+    const leftChannel = audioBuffer.getChannelData(0);
+    const rightChannel = audioBuffer.getChannelData(1);
+    const encodeNextChunk = (offset) => {
+      if (settled) return;
+      if (offset >= audioBuffer.length) {
+        worker.postMessage({ type: "finish" });
+        return;
+      }
+      const end = Math.min(offset + ENCODER_CHUNK_FRAMES, audioBuffer.length);
+      const left = toInt16(leftChannel.subarray(offset, end));
+      const right = toInt16(rightChannel.subarray(offset, end));
+      worker.postMessage(
+        { type: "chunk", offset, end, totalFrames: audioBuffer.length, left, right },
+        [left.buffer, right.buffer],
+      );
+    };
+
     worker.addEventListener("message", (event) => {
-      if (event.data.type === "progress") {
-        const percent = Math.round((event.data.frames / event.data.totalFrames) * 100);
+      if (event.data.type === "ready") {
+        encodeNextChunk(0);
+      } else if (event.data.type === "progress") {
+        const percent = Math.round((event.data.frames / audioBuffer.length) * 100);
         progressFill.style.width = `${percent}%`;
         progressTrack.setAttribute("aria-valuenow", String(percent));
-        progressCount.textContent = `${formatDuration(event.data.frames / OUTPUT_SAMPLE_RATE)} / ${formatDuration(event.data.totalFrames / OUTPUT_SAMPLE_RATE)}`;
+        progressCount.textContent = `${formatDuration(event.data.frames / OUTPUT_SAMPLE_RATE)} / ${formatDuration(audioBuffer.duration)}`;
+      } else if (event.data.type === "chunk") {
+        if (event.data.buffer.byteLength) parts.push(event.data.buffer);
+      } else if (event.data.type === "chunkDone") {
+        encodeNextChunk(event.data.end);
       } else if (event.data.type === "done") {
-        worker.terminate();
-        resolve(event.data.buffer);
+        finish(resolve, parts);
       } else if (event.data.type === "error") {
-        worker.terminate();
-        reject(new Error(event.data.message));
+        finish(reject, new Error(event.data.message));
       }
     });
     worker.addEventListener("error", (event) => {
-      worker.terminate();
-      reject(new Error(event.message || "MP3 encoder worker failed."));
+      finish(reject, new Error(event.message || "MP3 encoder worker failed."));
     });
-    worker.postMessage(
-      { left, right, sampleRate: OUTPUT_SAMPLE_RATE, bitrate },
-      [left.buffer, right.buffer],
-    );
+    worker.postMessage({ type: "init", sampleRate: OUTPUT_SAMPLE_RATE, bitrate });
   });
+}
+
+function toInt16(samples) {
+  const result = new Int16Array(samples.length);
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = Math.max(-1, Math.min(1, samples[index]));
+    result[index] = sample < 0 ? sample * 32768 : sample * 32767;
+  }
+  return result;
 }
 
 function getExtension(fileName) {

@@ -1,48 +1,28 @@
 import * as lame from "@breezystack/lamejs";
 
 const FRAMES_PER_CHUNK = 1152;
+let encoder = null;
 
 self.addEventListener("message", (event) => {
-  const { left, right, sampleRate, bitrate } = event.data;
   try {
-    const encoder = new lame.Mp3Encoder(2, sampleRate, bitrate);
-    const chunks = [];
-    let totalBytes = 0;
-
-    for (let offset = 0; offset < left.length; offset += FRAMES_PER_CHUNK) {
-      const end = Math.min(offset + FRAMES_PER_CHUNK, left.length);
-      const encoded = encoder.encodeBuffer(
-        toInt16(left.subarray(offset, end)),
-        toInt16(right.subarray(offset, end)),
-      );
-      if (encoded.length) {
-        const chunk = new Uint8Array(encoded);
-        chunks.push(chunk);
-        totalBytes += chunk.length;
-      }
-      if (offset % (FRAMES_PER_CHUNK * 32) === 0) {
-        self.postMessage({
-          type: "progress",
-          frames: end,
-          totalFrames: left.length,
-        });
-      }
+    if (event.data.type === "init") {
+      encoder = new lame.Mp3Encoder(2, event.data.sampleRate, event.data.bitrate);
+      self.postMessage({ type: "ready" });
+      return;
     }
 
-    const flushed = encoder.flush();
-    if (flushed.length) {
-      const finalChunk = new Uint8Array(flushed);
-      chunks.push(finalChunk);
-      totalBytes += finalChunk.length;
+    if (!encoder) throw new Error("MP3 encoder is not initialized.");
+    if (event.data.type === "chunk") {
+      encodeChunk(event.data);
+      return;
     }
 
-    const output = new Uint8Array(totalBytes);
-    let offset = 0;
-    for (const chunk of chunks) {
-      output.set(chunk, offset);
-      offset += chunk.length;
+    if (event.data.type === "finish") {
+      const flushed = new Uint8Array(encoder.flush());
+      encoder = null;
+      self.postMessage({ type: "chunk", buffer: flushed.buffer }, [flushed.buffer]);
+      self.postMessage({ type: "done" });
     }
-    self.postMessage({ type: "done", buffer: output.buffer }, [output.buffer]);
   } catch (error) {
     self.postMessage({
       type: "error",
@@ -51,11 +31,26 @@ self.addEventListener("message", (event) => {
   }
 });
 
-function toInt16(samples) {
-  const result = new Int16Array(samples.length);
-  for (let index = 0; index < samples.length; index += 1) {
-    const sample = Math.max(-1, Math.min(1, samples[index]));
-    result[index] = sample < 0 ? sample * 32768 : sample * 32767;
+function encodeChunk({ left, right, offset, end, totalFrames }) {
+  const encodedParts = [];
+  let totalBytes = 0;
+  for (let chunkOffset = 0; chunkOffset < left.length; chunkOffset += FRAMES_PER_CHUNK) {
+    const chunkEnd = Math.min(chunkOffset + FRAMES_PER_CHUNK, left.length);
+    const encoded = encoder.encodeBuffer(left.subarray(chunkOffset, chunkEnd), right.subarray(chunkOffset, chunkEnd));
+    if (encoded.length) {
+      const part = new Uint8Array(encoded);
+      encodedParts.push(part);
+      totalBytes += part.length;
+    }
   }
-  return result;
+
+  const output = new Uint8Array(totalBytes);
+  let outputOffset = 0;
+  for (const part of encodedParts) {
+    output.set(part, outputOffset);
+    outputOffset += part.length;
+  }
+  self.postMessage({ type: "chunk", buffer: output.buffer }, [output.buffer]);
+  self.postMessage({ type: "progress", frames: end, totalFrames });
+  self.postMessage({ type: "chunkDone", end });
 }
