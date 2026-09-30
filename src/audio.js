@@ -1,6 +1,6 @@
 import "./style.css";
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 10 * 60;
 const OUTPUT_SAMPLE_RATE = 44100;
 const ENCODER_CHUNK_FRAMES = 1152 * 32;
@@ -49,11 +49,11 @@ async function loadAudio(file) {
   player.load();
 
   if (file.size > MAX_FILE_SIZE) {
-    diagnosis.textContent = "File lebih dari 50 MB. Untuk mencegah browser kehabisan memori, pemeriksaan dan konversi perlu aplikasi desktop.";
+    diagnosis.textContent = "File lebih dari 100 MB. Untuk mencegah browser kehabisan memori, pemeriksaan dan konversi perlu aplikasi desktop.";
     sampleRateOutput.textContent = "Belum diperiksa";
     channelsOutput.textContent = "Belum diperiksa";
     durationOutput.textContent = "Belum diperiksa";
-    showMessage("File terlalu besar untuk dikonversi dengan aman di browser (maksimum 50 MB).", "error");
+    showMessage("File terlalu besar untuk dikonversi dengan aman di browser (maksimum 100 MB).", "error");
     return;
   }
 

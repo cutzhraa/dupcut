@@ -31,4 +31,4 @@ Large selections are read one file at a time in chunks, but scan speed and pract
 
 The rename page sorts source files by relative path, keeps each file extension, and avoids overwriting files already present in the `Renamed/` output folder.
 
-The audio tool decodes supported files locally in the browser and encodes MP3 locally in chunks. Conversion is limited to files up to 50 MB and 10 minutes to reduce browser memory risk. A standard MP3 is not guaranteed to work on every speaker; the speaker's supported formats and USB filesystem can also matter.
+The audio tool decodes supported files locally in the browser and encodes MP3 locally in chunks. Conversion is limited to files up to 100 MB and 10 minutes to reduce browser memory risk. A standard MP3 is not guaranteed to work on every speaker; the speaker's supported formats and USB filesystem can also matter.
