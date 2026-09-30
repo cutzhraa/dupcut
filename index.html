@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Cari file duplikat berdasarkan isi file, langsung di browser tanpa mengunggahnya."
+    />
+    <meta name="theme-color" content="#f6f7f4" />
+    <title>DupCut — Pilah file duplikat</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="DupCut beranda">
+          <span class="brand-mark" aria-hidden="true">d.</span>
+          <span>dupcut</span>
+        </a>
+        <nav class="page-nav" aria-label="Halaman DupCut">
+          <a class="page-nav-link page-nav-active" href="/" aria-current="page">Pilah file</a>
+          <a class="page-nav-link" href="/rename.html">Rename</a>
+        </nav>
+        <span class="privacy-pill"><span></span> Privat di perangkat kamu</span>
+      </header>
+
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">RAPIIN FILE, TANPA RIBET</p>
+        <h1 id="page-title">Yang sama, ketemu.<br /><span>Yang penting, tetap aman.</span></h1>
+        <p class="intro-copy">
+          Pilih foto atau folder. DupCut mencari file identik dan foto serupa,
+          lalu mempertahankan foto dengan resolusi tertinggi—semuanya tanpa upload.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Pemindai file">
+        <div class="picker-grid">
+          <label class="picker-card" for="file-input">
+            <span class="picker-icon" aria-hidden="true">↥</span>
+            <span class="picker-title">Pilih file</span>
+            <span class="picker-hint">Pilih banyak foto atau file sekaligus</span>
+            <span class="picker-action">Pilih file <span aria-hidden="true">→</span></span>
+          </label>
+          <label class="picker-card" for="folder-input">
+            <span class="picker-icon folder-icon" aria-hidden="true">▱</span>
+            <span class="picker-title">Pilih folder</span>
+            <span class="picker-hint">Pindai isi folder beserta subfoldernya</span>
+            <span class="picker-action">Pilih folder <span aria-hidden="true">→</span></span>
+          </label>
+        </div>
+        <input id="file-input" class="visually-hidden" type="file" multiple />
+        <input
+          id="folder-input"
+          class="visually-hidden"
+          type="file"
+          webkitdirectory
+          multiple
+        />
+
+        <div id="selection" class="selection" hidden>
+          <div class="selection-copy">
+            <strong id="selection-title">Belum ada file</strong>
+            <span id="selection-detail"></span>
+          </div>
+          <button id="scan-button" class="button button-primary" type="button">Mulai memindai</button>
+        </div>
+
+        <div id="progress-panel" class="progress-panel" hidden aria-live="polite">
+          <div class="progress-heading">
+            <span id="progress-label">Menyiapkan pemindaian...</span>
+            <span id="progress-count"></span>
+          </div>
+          <div
+            id="progress-track"
+            class="progress-track"
+            role="progressbar"
+            aria-label="Progres pemindaian file"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="progress-fill"></span>
+          </div>
+          <button id="cancel-button" class="text-button" type="button">Batal</button>
+        </div>
+
+        <p id="message" class="message" role="status" hidden></p>
+
+        <section id="results" class="results" hidden aria-live="polite">
+          <div class="results-heading">
+            <div>
+              <p class="eyebrow">HASIL PEMINDAIAN</p>
+              <h2 id="results-title">File kamu sudah dipilah.</h2>
+            </div>
+            <button id="separate-button" class="button button-primary" type="button">
+              Pisahkan ke folder
+            </button>
+          </div>
+          <p class="output-hint">
+            Setelah memilih folder tujuan, cek subfolder <strong>Unique</strong> dan
+            <strong>Duplicates</strong> di dalamnya. Proses ini menyalin file, bukan download ZIP.
+          </p>
+          <div class="summary-grid">
+            <article class="summary-card">
+              <span class="summary-icon unique-icon" aria-hidden="true">✓</span>
+              <span class="summary-label">File unik</span>
+              <strong id="unique-count">0</strong>
+              <span id="unique-size" class="summary-size">0 B</span>
+            </article>
+            <article class="summary-card duplicate-card">
+              <span class="summary-icon duplicate-icon" aria-hidden="true">↗</span>
+              <span class="summary-label">Salinan duplikat</span>
+              <strong id="duplicate-count">0</strong>
+              <span id="duplicate-size" class="summary-size">0 B</span>
+              <span id="duplicate-breakdown" class="summary-breakdown"></span>
+            </article>
+          </div>
+          <p id="result-note" class="result-note"></p>
+          <details class="file-details">
+            <summary>Lihat rincian file</summary>
+            <div id="file-list" class="file-list"></div>
+          </details>
+        </section>
+      </section>
+
+      <footer class="footnotes">
+        <div class="footnote">
+          <span class="footnote-number">01</span>
+          <p><strong>Isi & kemiripan</strong><br />Jumlah pisahkan file identik dan foto serupa.</p>
+        </div>
+        <div class="footnote">
+          <span class="footnote-number">02</span>
+          <p><strong>File asli tetap aman</strong><br />Hasil pemisahan disalin ke folder baru.</p>
+        </div>
+        <div class="footnote">
+          <span class="footnote-number">03</span>
+          <p><strong>Proses di browser</strong><br />Tidak ada file yang dikirim ke server.</p>
+        </div>
+      </footer>
+      <p class="browser-note">
+        Pemisahan langsung ke folder memerlukan Chrome atau Edge versi terbaru.
+        Resolusi berarti jumlah piksel; ketajaman foto tidak dapat dipastikan otomatis.
+      </p>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

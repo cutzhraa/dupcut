@@ -1,0 +1,17 @@
+{
+  "name": "dupcut",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "hash-wasm": "^4.12.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.1"
+  }
+}

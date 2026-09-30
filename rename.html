@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Rename banyak file dengan nomor urut atau nama folder, langsung di browser."
+    />
+    <meta name="theme-color" content="#f6f7f4" />
+    <title>DupCut — Rename file</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="DupCut beranda">
+          <span class="brand-mark" aria-hidden="true">d.</span>
+          <span>dupcut</span>
+        </a>
+        <nav class="page-nav" aria-label="Halaman DupCut">
+          <a class="page-nav-link" href="/">Pilah file</a>
+          <a class="page-nav-link page-nav-active" href="/rename.html" aria-current="page">Rename</a>
+        </nav>
+        <span class="privacy-pill"><span></span> Privat di perangkat kamu</span>
+      </header>
+
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">RENAME BANYAK FILE SEKALIGUS</p>
+        <h1 id="page-title">Nama baru,<br /><span>tetap rapi dan aman.</span></h1>
+        <p class="intro-copy">
+          Pilih folder, atur pola nama, lalu cek preview. Hasil disalin ke folder
+          baru—file asli tidak diubah atau dihapus.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Pengaturan rename file">
+        <div class="rename-picker-wrap">
+          <label class="picker-card rename-picker" for="rename-folder-input">
+            <span class="picker-icon folder-icon" aria-hidden="true">▱</span>
+            <span class="picker-title">Pilih folder</span>
+            <span class="picker-hint">File dari subfolder ikut diproses dalam urutan nama</span>
+            <span class="picker-action">Pilih folder <span aria-hidden="true">→</span></span>
+          </label>
+          <input
+            id="rename-folder-input"
+            class="visually-hidden"
+            type="file"
+            webkitdirectory
+            multiple
+          />
+          <div id="rename-selection" class="selection rename-selection" hidden>
+            <div class="selection-copy">
+              <strong id="rename-selection-title"></strong>
+              <span id="rename-selection-detail"></span>
+            </div>
+          </div>
+        </div>
+
+        <section id="rename-settings" class="rename-settings" hidden aria-label="Atur nama file">
+          <div class="settings-heading">
+            <p class="eyebrow">POLA NAMA</p>
+            <h2>Pilih format nama baru</h2>
+          </div>
+          <div class="rename-options">
+            <label class="rename-option">
+              <input type="radio" name="rename-mode" value="number" checked />
+              <span class="option-content">
+                <strong>Nomor berurutan</strong>
+                <span>Contoh: <code>001.jpg</code>, <code>002.png</code></span>
+              </span>
+            </label>
+            <label class="rename-option">
+              <input type="radio" name="rename-mode" value="folder" />
+              <span class="option-content">
+                <strong>Nama folder + nomor</strong>
+                <span>Contoh: <code>Liburan_001.jpg</code></span>
+              </span>
+            </label>
+          </div>
+          <div class="rename-controls">
+            <label class="field-label" for="rename-prefix">
+              Nama depan
+              <input id="rename-prefix" class="text-input" type="text" maxlength="80" value="File" />
+            </label>
+            <label class="field-label field-number" for="rename-start">
+              Mulai dari
+              <input id="rename-start" class="text-input" type="number" min="0" max="999999999" value="1" />
+            </label>
+            <label class="field-label field-number" for="rename-padding">
+              Digit nomor
+              <input id="rename-padding" class="text-input" type="number" min="1" max="9" value="3" />
+            </label>
+          </div>
+
+          <div class="preview-heading">
+            <div>
+              <p class="eyebrow">PREVIEW</p>
+              <h2 id="rename-preview-title">Nama file yang akan dibuat</h2>
+            </div>
+            <span id="rename-preview-count" class="preview-count"></span>
+          </div>
+          <div id="rename-preview" class="rename-preview"></div>
+          <button id="rename-copy-button" class="button button-primary rename-submit" type="button" disabled>
+            Salin file dengan nama baru
+          </button>
+          <p class="output-hint">
+            Pilih folder tujuan. Hasil masuk ke subfolder <strong>Renamed</strong>;
+            nama file yang sudah ada tidak akan ditimpa.
+          </p>
+        </section>
+
+        <div id="rename-progress-panel" class="progress-panel" hidden aria-live="polite">
+          <div class="progress-heading">
+            <span id="rename-progress-label">Menyiapkan...</span>
+            <span id="rename-progress-count"></span>
+          </div>
+          <div class="progress-track" role="progressbar" aria-label="Progres menyalin file" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="rename-progress-fill"></span>
+          </div>
+        </div>
+        <p id="rename-message" class="message" role="status" hidden></p>
+      </section>
+
+      <footer class="footnotes">
+        <div class="footnote">
+          <span class="footnote-number">01</span>
+          <p><strong>Ekstensi tetap</strong><br />Format file tetap seperti aslinya.</p>
+        </div>
+        <div class="footnote">
+          <span class="footnote-number">02</span>
+          <p><strong>Urutan konsisten</strong><br />Diurutkan berdasarkan nama/path file.</p>
+        </div>
+        <div class="footnote">
+          <span class="footnote-number">03</span>
+          <p><strong>Lokal dan aman</strong><br />Tidak ada file yang di-upload atau dihapus.</p>
+        </div>
+      </footer>
+      <p class="browser-note">
+        Menyalin ke folder tujuan memerlukan Chrome atau Edge terbaru dan izin tulis.
+      </p>
+    </main>
+    <script type="module" src="/src/rename.js"></script>
+  </body>
+</html>
