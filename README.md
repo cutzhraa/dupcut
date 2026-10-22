@@ -1,16 +1,40 @@
-# React + Vite
+# DupCut ✂️📂
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+DupCut adalah aplikasi utilitas file dan media lokal berbasis web yang dirancang untuk membantu pengguna mengelola, merapikan, memindai duplikat, mengubah nama file secara massal, memotong foto, hingga mengonversi format gambar dengan **100% privasi terjaga** langsung di dalam perangkat (tanpa upload ke server/cloud).
 
-Currently, two official plugins are available:
+## 🚀 Fitur Utama
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Pilah File & Duplikat (Duplicate Finder):** Memindai file identik dan foto serupa menggunakan algoritma *pHash* & *BK-Tree*, secara otomatis mempertahankan versi resolusi tertinggi.
+- **Rename File Fleksibel:** Mengubah nama file secara massal (berurutan atau berbasis nama folder) maupun secara manual satu per satu sesuai keinginan.
+- **Konverter Format Gambar:** Mengubah format gambar antar format populer (JPG, PNG, WebP, BMP, GIF) secara instan di browser.
+- **Crop & Utilitas Lainnya:** Memotong foto dan menghapus latar belakang langsung secara lokal.
+- **100% Privat & Aman:** Semua proses berjalan murni di dalam *browser* menggunakan JavaScript & Web APIs, file kamu tidak pernah dikirim ke server luar.
 
-## React Compiler
+## 🛠️ Teknologi yang Digunakan
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React.js, React Router, Vite, Tailwind CSS / Custom CSS.
+- **Pemrosesan File & Kriptografi:** `hash-wasm` (SHA-256), HTML5 Canvas API, File System Access API.
+- **Deployment & PWA:** Vercel & Progressive Web App (PWA) ready (bisa diinstal sebagai aplikasi atau di-build ke `.apk`).
 
-## Expanding the ESLint configuration
+## 📦 Menjalankan Proyek Secara Lokal
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Clone repositori ini:
+   ```bash
+   git clone [https://github.com/username/dupcut.git](https://github.com/username/dupcut.git)
+
+## Masuk ke direktori proyek:
+
+Bash
+cd dupcut
+Install dependensi:
+
+Bash
+npm install
+Jalankan server development:
+
+Bash
+npm run dev
+🌐 Live Demo
+Akses aplikasi secara langsung melalui: dupcut.vercel.app
+
+© 2026 DupCut. Dibuat untuk portofolio dan produktivitas harian.

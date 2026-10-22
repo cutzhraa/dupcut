@@ -3,19 +3,23 @@
   "short_name": "DupCut",
   "description": "Aplikasi pengelola, pembersih file, dan utilitas media 100% privat di perangkat.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#f5f7f3",
+  "orientation": "portrait",
+  "background_color": "#121814",
   "theme_color": "#121814",
   "icons": [
     {
       "src": "/dupcut.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/dupcut.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
