@@ -1,13 +1,7 @@
-import { defineConfig } from "vite";
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
+// https://vite.dev/config/
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      input: {
-        main: "index.html",
-        rename: "rename.html",
-        audio: "audio.html",
-      },
-    },
-  },
-});
+  plugins: [react()],
+})
