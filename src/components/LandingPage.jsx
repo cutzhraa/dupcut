@@ -1,44 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallBtn, setShowInstallBtn] = useState(false);
-
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBtn(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      console.log('Pengguna menyetujui instalasi PWA');
-    }
-    setDeferredPrompt(null);
-    setShowInstallBtn(false);
-  };
-
   return (
     <div>
       <main className="shell">
         <header className="topbar">
             <a className="brand" href="/" aria-label="DupCut beranda" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-                <img src="/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
+                <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
                 <span style={{ fontWeight: 700, fontSize: '18px', color: '#1a1a1a' }}>dupcut</span>
             </a>
-            <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
+            <span className="privacy-pill"><span></span> Privat di perangkat kamu[cite: 6, 7]</span>
         </header>
 
         <section className="intro" aria-labelledby="page-title" style={{ textAlign: 'center', padding: '40px 0 20px' }}>
@@ -51,7 +23,7 @@ export default function LandingPage() {
             DupCut adalah alat pengelola file dan foto lokal yang aman, super cepat, dan menjaga privasi data perangkatmu sepenuhnya tanpa koneksi ke cloud.
           </p>
 
-          <div style={{ marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ marginTop: '32px' }}>
             <Link 
               to="/app" 
               className="button button-primary" 
@@ -59,25 +31,6 @@ export default function LandingPage() {
             >
               Mulai Gunakan Aplikasi <span aria-hidden="true">→</span>
             </Link>
-
-            {showInstallBtn && (
-              <button 
-                onClick={handleInstallClick}
-                className="button"
-                style={{ 
-                  background: '#121814', 
-                  color: '#fff', 
-                  border: 'none', 
-                  padding: '14px 24px', 
-                  fontSize: '1rem', 
-                  borderRadius: '8px', 
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                📱 Install ke HP
-              </button>
-            )}
           </div>
         </section>
 
@@ -122,8 +75,8 @@ export default function LandingPage() {
         <div className="footer-container">
           <div className="footer-top">
             <div className="footer-brand-info">
-              <a href="/" className="footer-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-                <img src="/dupcut.png" alt="DupCut Logo" style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover' }} />
+              <a href="/" className="footer-logo">
+                <span className="footer-logo-mark">d.</span>
                 <span>dupcut</span>
               </a>
               <p className="footer-desc">
