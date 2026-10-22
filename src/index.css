@@ -583,12 +583,9 @@ h2 {
 .footer-logo-mark {
   width: 26px;
   height: 26px;
-  display: grid;
-  place-items: center;
-  background: var(--green);
-  color: #fff;
+  display: block;
+  object-fit: cover;
   border-radius: 7px;
-  font-size: 13px;
 }
 
 .footer-desc {

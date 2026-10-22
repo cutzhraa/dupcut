@@ -1,3 +1,4 @@
+import SocialLinks from './SocialLinks';
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -447,13 +448,14 @@ export default function RenamePage() {
           <div className="footer-top">
             <div className="footer-brand-info">
               <a href="/app" className="footer-logo">
-                <span className="footer-logo-mark">d.</span>
+                <img className="footer-logo-mark" src="/dupcut.png" alt="" />
                 <span>dupcut</span>
               </a>
               <p className="footer-desc">
                 Aplikasi pengelola dan pembersih file lokal yang aman, cepat, dan menjaga privasi data perangkatmu sepenuhnya.
               </p>
             </div>
+            <SocialLinks />
           </div>
           <div className="footer-divider"></div>
           <div className="footer-bottom">
