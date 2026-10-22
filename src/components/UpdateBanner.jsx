@@ -5,29 +5,38 @@ export default function UpdateBanner() {
   const [registration, setRegistration] = useState(null);
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
-        setRegistration(reg);
+    try {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((reg) => {
+          if (!reg) return;
+          setRegistration(reg);
 
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                setShowUpdate(true);
-              }
-            });
-          }
-        });
-      });
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  setShowUpdate(true);
+                }
+              });
+            }
+          });
+        }).catch(() => {});
+      }
+    } catch (e) {
+      console.error(e);
     }
   }, []);
 
   const handleUpdate = () => {
-    if (registration && registration.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    try {
+      if (registration && registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+      window.location.reload();
+    } catch {
+      window.location.reload();
     }
-    window.location.reload();
   };
 
   if (!showUpdate) return null;
@@ -46,7 +55,7 @@ export default function UpdateBanner() {
       fontSize: '14px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
     }}>
-      <span>✨ Versi baru DupCut tersedia! Perbarui sekarang untuk menikmati fitur terbaru.</span>
+      <span>✨ Versi baru DupCut tersedia!</span>
       <div style={{ display: 'flex', gap: '8px' }}>
         <button
           onClick={handleUpdate}
