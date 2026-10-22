@@ -34,7 +34,7 @@ Jalankan server development:
 
 Bash
 npm run dev
-🌐 Live Demo
-Akses aplikasi secara langsung melalui: dupcut.vercel.app
 
-© 2026 DupCut. Dibuat untuk portofolio dan produktivitas harian.
+🌐 Live Demo Akses aplikasi secara langsung melalui: [https://dupcut.vercel.app](https://dupcut.vercel.app)
+
+© 2026 DupCut.
