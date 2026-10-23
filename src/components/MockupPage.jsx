@@ -14,6 +14,7 @@ export default function MockupPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageReady, setImageReady] = useState(false);
   const [code, setCode] = useState('');
+  const [windowTitle, setWindowTitle] = useState('');
   const [mode, setMode] = useState('image');
   const [style, setStyle] = useState('macos');
   const [background, setBackground] = useState(BACKGROUNDS[0].value);
@@ -102,11 +103,11 @@ export default function MockupPage() {
       ctx.fillStyle = '#8b8b91';
       ctx.font = '500 12px Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('My website', frameX + frameWidth / 2, frameY + 27);
+      ctx.fillText(windowTitle.trim() || 'Nama situs', frameX + frameWidth / 2, frameY + 27, Math.max(40, frameWidth - 140));
     } else {
       ctx.fillStyle = '#6b7280';
       ctx.font = '500 12px Arial, sans-serif';
-      ctx.fillText('My website', frameX + 18, frameY + 25);
+      ctx.fillText(windowTitle.trim() || 'Nama situs', frameX + 18, frameY + 25, Math.max(40, frameWidth - 110));
       ['—', '□', '×'].forEach((icon, index) => {
         ctx.fillStyle = '#4b5563';
         ctx.textAlign = 'center';
@@ -212,6 +213,12 @@ export default function MockupPage() {
                 <textarea value={code} onChange={(event) => setCode(event.target.value)} placeholder={'<h1>Halo, dunia!</h1>\n<p>Mockup pertamaku</p>'} rows={5} />
               </label>
             )}
+
+            <div className="mockup-option-row">
+              <label className="mockup-title-field">Judul di title bar
+                <input type="text" value={windowTitle} onChange={(event) => setWindowTitle(event.target.value)} placeholder="Contoh: dupcut.vercel.app" maxLength={80} />
+              </label>
+            </div>
 
             <div className="mockup-option-row">
               <label>Gaya jendela

@@ -12,6 +12,7 @@ import ConvertPage from './components/ConvertPage';
 import UpdateBanner from './components/UpdateBanner';
 import MockupPage from './components/MockupPage';
 import CarouselGridPage from './components/CarouselGridPage';
+import UpscalePage from './components/UpscalePage';
 
 const IMAGE_SIMILARITY_THRESHOLD = 6;
 const HASH_PROGRESS_SHARE = 0.8;
@@ -594,7 +595,7 @@ function BottomNav() {
         <span>📁</span>
         <span>Kategori</span>
       </Link>
-      <Link className={`bottom-nav-link ${currentPath === '/more' || currentPath === '/remove-bg' || currentPath === '/convert' || currentPath === '/mockup' || currentPath === '/carousel-grid' ? 'bottom-nav-active' : ''}`} to="/more">
+      <Link className={`bottom-nav-link ${currentPath === '/more' || currentPath === '/remove-bg' || currentPath === '/convert' || currentPath === '/mockup' || currentPath === '/carousel-grid' || currentPath === '/upscale' ? 'bottom-nav-active' : ''}`} to="/more">
         <span>☰</span>
         <span>More</span>
       </Link>
@@ -619,6 +620,7 @@ function AppContent() {
         <Route path="/convert" element={<ConvertPage />} />
         <Route path="/mockup" element={<MockupPage />} />
         <Route path="/carousel-grid" element={<CarouselGridPage />} />
+        <Route path="/upscale" element={<UpscalePage />} />
       </Routes>
       {showBottomNav && <BottomNav />}
       <UpdateBanner hasBottomNav={showBottomNav} />

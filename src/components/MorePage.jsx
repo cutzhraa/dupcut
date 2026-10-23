@@ -70,6 +70,13 @@ export default function MorePage() {
               <span className="picker-action">Buka menu <span aria-hidden="true">→</span></span>
             </Link>
 
+            <Link to="/upscale" className="picker-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <span className="picker-icon folder-icon" aria-hidden="true">↗</span>
+              <span className="picker-title">Perbesar Resolusi Foto</span>
+              <span className="picker-hint">Upscale foto 2× atau 4× dan unduh sebagai PNG</span>
+              <span className="picker-action">Buka menu <span aria-hidden="true">→</span></span>
+            </Link>
+
           </div>
         </section>
 
