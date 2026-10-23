@@ -1,6 +1,42 @@
 import SocialLinks from './SocialLinks';
 import React, { useState } from 'react';
 
+const sanitizeFileName = (fileName) => {
+  let safeName = String(fileName || 'file')
+    .normalize('NFC')
+    .replace(/[\u0000-\u001f\u007f<>:"/\\|?*]/g, '_')
+    .trim()
+    .replace(/[. ]+$/g, '');
+
+  if (!safeName || safeName === '.' || safeName === '..') safeName = 'file';
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(safeName)) safeName = `_${safeName}`;
+
+  const extensionIndex = safeName.lastIndexOf('.');
+  const extension = extensionIndex > 0 ? safeName.slice(extensionIndex) : '';
+  const stem = extensionIndex > 0 ? safeName.slice(0, extensionIndex) : safeName;
+  const maxStemLength = Math.max(1, 180 - Array.from(extension).length);
+  return `${Array.from(stem).slice(0, maxStemLength).join('')}${extension}`;
+};
+
+const getUniqueFileName = (fileName, usedNames) => {
+  const safeName = sanitizeFileName(fileName);
+  const extensionIndex = safeName.lastIndexOf('.');
+  const extension = extensionIndex > 0 ? safeName.slice(extensionIndex) : '';
+  const stem = extensionIndex > 0 ? safeName.slice(0, extensionIndex) : safeName;
+  let candidate = safeName;
+  let suffix = 2;
+
+  while (usedNames.has(candidate.toLocaleLowerCase())) {
+    const suffixText = ` (${suffix})`;
+    const maxStemLength = Math.max(1, 180 - Array.from(extension).length - suffixText.length);
+    candidate = `${Array.from(stem).slice(0, maxStemLength).join('')}${suffixText}${extension}`;
+    suffix += 1;
+  }
+
+  usedNames.add(candidate.toLocaleLowerCase());
+  return candidate;
+};
+
 export default function OrganizePage() {
   const [files, setFiles] = useState([]);
   const [folderName, setFolderName] = useState('');
@@ -60,6 +96,7 @@ export default function OrganizePage() {
       return;
     }
 
+    let currentFileName = '';
     try {
       setIsProcessing(true);
       setMessage({ text: '', type: '' });
@@ -72,18 +109,10 @@ export default function OrganizePage() {
       let successCount = 0;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        currentFileName = file.name;
         const category = getCategory(file.name);
         const categoryNames = usedNames.get(category) || new Set();
-        const extensionIndex = file.name.lastIndexOf('.');
-        const stem = extensionIndex > 0 ? file.name.slice(0, extensionIndex) : file.name;
-        const extension = extensionIndex > 0 ? file.name.slice(extensionIndex) : '';
-        let outputName = file.name;
-        let suffix = 2;
-        while (categoryNames.has(outputName)) {
-          outputName = `${stem} (${suffix})${extension}`;
-          suffix += 1;
-        }
-        categoryNames.add(outputName);
+        const outputName = getUniqueFileName(file.name, categoryNames);
         usedNames.set(category, categoryNames);
 
         setProgress({
@@ -111,7 +140,8 @@ export default function OrganizePage() {
         setMessage({ text: 'Pemilihan folder tujuan dibatalkan.', type: '' });
         return;
       }
-      setMessage({ text: `Gagal membuat folder hasil: ${err.message || 'Terjadi kesalahan saat menulis file.'}`, type: 'message-error' });
+      const fileDetail = currentFileName ? ` File yang sedang diproses: "${currentFileName}".` : '';
+      setMessage({ text: `Gagal membuat folder hasil: ${err.message || 'Terjadi kesalahan saat menulis file.'}${fileDetail}`, type: 'message-error' });
     }
   };
 
