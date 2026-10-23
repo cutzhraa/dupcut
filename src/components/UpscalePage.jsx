@@ -8,6 +8,8 @@ export default function UpscalePage() {
   const [sourceFile, setSourceFile] = useState(null);
   const [sourceUrl, setSourceUrl] = useState('');
   const [scale, setScale] = useState(2);
+  const [sharpen, setSharpen] = useState(1.15);
+  const [progress, setProgress] = useState('');
   const [resultUrl, setResultUrl] = useState('');
   const [resultSize, setResultSize] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
@@ -42,6 +44,7 @@ export default function UpscalePage() {
   const handleUpscale = async () => {
     if (!sourceUrl || !sourceFile) return;
     setIsProcessing(true);
+    setProgress('Menyiapkan foto…');
     setMessage({ text: '', type: '' });
     try {
       const image = new Image();
@@ -65,9 +68,55 @@ export default function UpscalePage() {
       canvas.height = outputHeight;
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Canvas tidak tersedia di browser ini.');
+
+      const sourceCanvas = document.createElement('canvas');
+      sourceCanvas.width = image.naturalWidth;
+      sourceCanvas.height = image.naturalHeight;
+      const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+      if (!sourceContext) throw new Error('Canvas tidak tersedia di browser ini.');
+      sourceContext.drawImage(image, 0, 0);
+
+      if (Number(sharpen) > 0) {
+        setProgress('Menajamkan detail foto…');
+        const imageData = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        const source = imageData.data;
+        const result = new Uint8ClampedArray(source.length);
+        const width = sourceCanvas.width;
+        const height = sourceCanvas.height;
+        const amount = Number(sharpen);
+        const rowsPerChunk = Math.max(16, Math.floor(500_000 / width));
+
+        for (let startY = 0; startY < height; startY += rowsPerChunk) {
+          const endY = Math.min(height, startY + rowsPerChunk);
+          for (let y = startY; y < endY; y += 1) {
+            const topY = Math.max(0, y - 1);
+            const bottomY = Math.min(height - 1, y + 1);
+            for (let x = 0; x < width; x += 1) {
+              const leftX = Math.max(0, x - 1);
+              const rightX = Math.min(width - 1, x + 1);
+              const index = (y * width + x) * 4;
+              const left = (y * width + leftX) * 4;
+              const right = (y * width + rightX) * 4;
+              const top = (topY * width + x) * 4;
+              const bottom = (bottomY * width + x) * 4;
+              for (let channel = 0; channel < 3; channel += 1) {
+                const pixel = source[index + channel];
+                const blurred = (pixel * 4 + source[left + channel] + source[right + channel] + source[top + channel] + source[bottom + channel]) / 8;
+                result[index + channel] = pixel + amount * (pixel - blurred);
+              }
+              result[index + 3] = source[index + 3];
+            }
+          }
+          if (endY < height) await new Promise((resolve) => window.setTimeout(resolve, 0));
+        }
+        imageData.data.set(result);
+        sourceContext.putImageData(imageData, 0, 0);
+      }
+
+      setProgress('Memperbesar resolusi…');
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
-      context.drawImage(image, 0, 0, outputWidth, outputHeight);
+      context.drawImage(sourceCanvas, 0, 0, outputWidth, outputHeight);
 
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Gagal membuat gambar hasil.')), 'image/png');
@@ -87,6 +136,7 @@ export default function UpscalePage() {
       setMessage({ text: `Upscale gagal: ${error.message}`, type: 'message-error' });
     } finally {
       setIsProcessing(false);
+      setProgress('');
     }
   };
 
@@ -108,9 +158,9 @@ export default function UpscalePage() {
         </header>
 
         <section className="intro" aria-labelledby="upscale-title">
-          <p className="eyebrow">PERBESAR RESOLUSI FOTO</p>
-          <h1 id="upscale-title">Foto lebih besar,<br /><span>siap dipakai di mana saja.</span></h1>
-          <p className="intro-copy">Perbesar dimensi gambar 2× atau 4× langsung di perangkatmu, lalu simpan hasilnya sebagai PNG.</p>
+          <p className="eyebrow">PERTAJAM & TINGKATKAN RESOLUSI</p>
+          <h1 id="upscale-title">Foto lebih tajam,<br /><span>lebih jelas saat diperbesar.</span></h1>
+          <p className="intro-copy">Kurangi kesan blur dengan penajaman detail, lalu perbesar ukuran foto 2× atau 4× langsung di perangkatmu.</p>
         </section>
 
         <section className="workspace upscale-workspace" aria-label="Pengaturan upscale foto">
@@ -134,10 +184,18 @@ export default function UpscalePage() {
                 </label>
                 <button className="button button-secondary" type="button" onClick={() => fileInputRef.current?.click()}>Ganti foto</button>
               </div>
-              <p className="upscale-note">Upscale ini memperbesar resolusi dengan interpolasi berkualitas tinggi. Hasilnya punya dimensi lebih besar, tetapi tidak menambahkan detail baru seperti AI enhancement.</p>
+              <label className="upscale-sharpen">Penajaman detail <span>{Number(sharpen) === 0 ? 'Mati' : Number(sharpen) < 1.5 ? 'Seimbang' : 'Kuat'}</span>
+                <select value={sharpen} onChange={(event) => { setSharpen(Number(event.target.value)); setResultUrl(''); setResultSize(null); }}>
+                  <option value={0}>Mati</option>
+                  <option value={1.15}>Seimbang</option>
+                  <option value={1.8}>Kuat</option>
+                </select>
+              </label>
+              <p className="upscale-note">Penajaman membantu memperjelas tepi dan detail halus. Foto yang sangat blur atau salah fokus tetap memiliki batas; proses ini tidak bisa mengembalikan detail yang hilang sepenuhnya.</p>
+              {isProcessing && <p className="message message-info" role="status">{progress}</p>}
               {message.text && <p className={`message ${message.type}`} role="status">{message.text}</p>}
               <div className="upscale-actions">
-                <button className="button button-primary" type="button" disabled={isProcessing} onClick={handleUpscale}>{isProcessing ? 'Memperbesar foto…' : 'Perbesar foto'}</button>
+                <button className="button button-primary" type="button" disabled={isProcessing} onClick={handleUpscale}>{isProcessing ? 'Memproses foto…' : 'Pertajam & tingkatkan HD'}</button>
                 <button className="button button-secondary" type="button" disabled={!resultUrl} onClick={downloadResult}>Unduh PNG HD</button>
               </div>
             </>
