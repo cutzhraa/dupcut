@@ -77,7 +77,8 @@ export default function OrganizePage() {
     const selectedFiles = Array.from(e.target.files).filter((file) => {
       const lowerName = file.name.toLowerCase();
       return !['desktop.ini', 'thumbs.db', '.ds_store', '.localized'].includes(lowerName)
-        && !lowerName.startsWith('._');
+        && !lowerName.startsWith('._')
+        && !lowerName.startsWith('.pending-');
     });
     if (selectedFiles.length === 0) return;
 
@@ -103,6 +104,8 @@ export default function OrganizePage() {
     let currentFileName = '';
     let opfsRoot = null;
     let stagingDirectoryName = null;
+    const unavailableFiles = [];
+    const unavailableIndexes = new Set();
     try {
       setIsProcessing(true);
       setMessage({ text: '', type: '' });
@@ -111,13 +114,9 @@ export default function OrganizePage() {
       const targetDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
       let stagingDirectory = null;
 
-      // If output is created inside the selected source folder, snapshot its files first.
-      // Otherwise writing the first result can invalidate other webkitdirectory File objects.
-      if (targetDirHandle.name === folderName) {
-        if (!navigator.storage?.getDirectory) {
-          throw new Error('Browser ini tidak mendukung penyimpanan sementara yang diperlukan untuk memisahkan file ke folder sumber yang sama. Pilih folder tujuan lain.');
-        }
-
+      // Snapshot source files before creating output so mobile file-provider references
+      // cannot expire or change while the destination is being written.
+      if (navigator.storage?.getDirectory) {
         opfsRoot = await navigator.storage.getDirectory();
         stagingDirectoryName = `dupcut-staging-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         stagingDirectory = await opfsRoot.getDirectoryHandle(stagingDirectoryName, { create: true });
@@ -131,9 +130,30 @@ export default function OrganizePage() {
           });
           const stagedHandle = await stagingDirectory.getFileHandle(`${i}.bin`, { create: true });
           const stagedWriter = await stagedHandle.createWritable();
-          await stagedWriter.write(files[i]);
-          await stagedWriter.close();
+          try {
+            await stagedWriter.write(files[i]);
+            await stagedWriter.close();
+          } catch (stageError) {
+            try { await stagedWriter.abort(); } catch { /* The writer may already be closed. */ }
+            if (stageError.name === 'NotFoundError' || /could not be found/i.test(stageError.message)) {
+              unavailableFiles.push(files[i].name);
+              unavailableIndexes.add(i);
+              try { await stagingDirectory.removeEntry(`${i}.bin`); } catch { /* Ignore incomplete staging entries. */ }
+              continue;
+            }
+            throw new Error(`Tidak bisa menyiapkan file "${files[i].name}": ${stageError.message}`);
+          }
         }
+      } else if (targetDirHandle.name === folderName) {
+        throw new Error('Browser ini tidak menyediakan penyimpanan sementara untuk folder yang sama. Pilih folder tujuan lain atau gunakan Chrome/Edge terbaru.');
+      }
+
+      currentFileName = '';
+      const availableIndexes = files
+        .map((_, index) => index)
+        .filter((index) => !unavailableIndexes.has(index));
+      if (availableIndexes.length === 0) {
+        throw new Error('Tidak ada file yang bisa dibaca. Pilih ulang folder sumber lalu coba lagi.');
       }
 
       const organizedDirHandle = await targetDirHandle.getDirectoryHandle(`Hasil_Pemisahan_${folderName}`, { create: true });
@@ -141,7 +161,8 @@ export default function OrganizePage() {
       const copyingProgressStart = stagingDirectory ? 40 : 0;
 
       let successCount = 0;
-      for (let i = 0; i < files.length; i++) {
+      for (let position = 0; position < availableIndexes.length; position++) {
+        const i = availableIndexes[position];
         const sourceFile = files[i];
         currentFileName = sourceFile.name;
         const file = stagingDirectory
@@ -154,8 +175,8 @@ export default function OrganizePage() {
 
         setProgress({
           text: `Menyalin ke folder [${category}]: ${sourceFile.name}`,
-          percent: Math.round(copyingProgressStart + ((i + 1) / files.length) * (100 - copyingProgressStart)),
-          count: `${i + 1} dari ${files.length}`
+          percent: Math.round(copyingProgressStart + ((position + 1) / availableIndexes.length) * (100 - copyingProgressStart)),
+          count: `${position + 1} dari ${availableIndexes.length}`
         });
 
         const categoryDirHandle = await organizedDirHandle.getDirectoryHandle(category, { create: true });
@@ -167,8 +188,10 @@ export default function OrganizePage() {
       }
 
       setMessage({
-        text: `Berhasil! ${successCount} file telah dikelompokkan dan disalin ke dalam subfolder terstruktur.`,
-        type: 'message-success'
+        text: unavailableFiles.length
+          ? `Selesai dengan catatan: ${successCount} file dipisahkan. ${unavailableFiles.length} file tidak tersedia saat dibaca (${unavailableFiles.slice(0, 3).join(', ')}${unavailableFiles.length > 3 ? ', …' : ''}). Pilih ulang folder sumber untuk mencoba file tersebut lagi.`
+          : `Berhasil! ${successCount} file telah dikelompokkan dan disalin ke dalam subfolder terstruktur.`,
+        type: unavailableFiles.length ? 'message-error' : 'message-success'
       });
     } catch (err) {
       if (err.name === 'AbortError') {
