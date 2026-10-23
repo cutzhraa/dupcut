@@ -1,40 +1,47 @@
-# DupCut ✂️📂
+# DupCut
 
-DupCut adalah aplikasi utilitas file dan media lokal berbasis web yang dirancang untuk membantu pengguna mengelola, merapikan, memindai duplikat, mengubah nama file secara massal, memotong foto, hingga mengonversi format gambar dengan **100% privasi terjaga** langsung di dalam perangkat (tanpa upload ke server/cloud).
+DupCut adalah aplikasi web untuk membantu merapikan dan mengolah file langsung dari browser.
 
-## 🚀 Fitur Utama
+**Demo:** [dupcut.vercel.app](https://dupcut.vercel.app)
 
-- **Pilah File & Duplikat (Duplicate Finder):** Memindai file identik dan foto serupa menggunakan algoritma *pHash* & *BK-Tree*, secara otomatis mempertahankan versi resolusi tertinggi.
-- **Rename File Fleksibel:** Mengubah nama file secara massal (berurutan atau berbasis nama folder) maupun secara manual satu per satu sesuai keinginan.
-- **Konverter Format Gambar:** Mengubah format gambar antar format populer (JPG, PNG, WebP, BMP, GIF) secara instan di browser.
-- **Crop & Utilitas Lainnya:** Memotong foto dan menghapus latar belakang langsung secara lokal.
-- **100% Privat & Aman:** Semua proses berjalan murni di dalam *browser* menggunakan JavaScript & Web APIs, file kamu tidak pernah dikirim ke server luar.
+## Fitur
 
-## 🛠️ Teknologi yang Digunakan
+- **Pilah file:** Pindai file identik dan foto yang mirip.
+- **Rename:** Ubah nama banyak file sekaligus dengan pratinjau.
+- **Crop gambar:** Potong gambar dengan rasio yang tersedia.
+- **Kategori:** Kelompokkan file ke folder berdasarkan jenisnya.
+- **Hapus background:** Hapus latar gambar, lalu pilih warna atau gambar untuk latar baru.
+- **Konversi gambar:** Ubah gambar ke format lain yang didukung aplikasi.
 
-- **Frontend:** React.js, React Router, Vite, Tailwind CSS / Custom CSS.
-- **Pemrosesan File & Kriptografi:** `hash-wasm` (SHA-256), HTML5 Canvas API, File System Access API.
-- **Deployment & PWA:** Vercel & Progressive Web App (PWA) ready (bisa diinstal sebagai aplikasi atau di-build ke `.apk`).
+## Privasi
 
-## 📦 Menjalankan Proyek Secara Lokal
+File diproses di browser pada perangkat pengguna. Fitur hapus background dapat mengunduh model pemrosesan saat pertama kali digunakan; model tersebut digunakan di browser.
 
-1. Clone repositori ini:
-   ```bash
-   git clone [https://github.com/username/dupcut.git](https://github.com/username/dupcut.git)
+## Menjalankan secara lokal
 
-## Masuk ke direktori proyek:
+Pastikan Node.js dan npm sudah terpasang.
 
-Bash
+```bash
+git clone https://github.com/cutzhraa/dupcut.git
 cd dupcut
-Install dependensi:
-
-Bash
 npm install
-Jalankan server development:
-
-Bash
 npm run dev
+```
 
-🌐 Live Demo Akses aplikasi secara langsung melalui: [https://dupcut.vercel.app](https://dupcut.vercel.app)
+Buka alamat lokal yang ditampilkan Vite di terminal.
 
-© 2026 DupCut.
+Untuk membuat dan melihat build produksi:
+
+```bash
+npm run build
+npm run preview
+```
+
+## Teknologi
+
+- React
+- Vite
+- React Router
+- hash-wasm untuk pemeriksaan file
+- @imgly/background-removal untuk penghapusan background
+- Canvas dan Web APIs untuk pemrosesan di browser
