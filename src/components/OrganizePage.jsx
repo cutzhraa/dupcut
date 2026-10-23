@@ -1,17 +1,12 @@
 import SocialLinks from './SocialLinks';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { createZipBlob } from '../utils/createZip';
 
 export default function OrganizePage() {
-  const isAndroid = /Android/i.test(navigator.userAgent);
   const [files, setFiles] = useState([]);
   const [folderName, setFolderName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState({ text: '', percent: 0, count: '' });
   const [message, setMessage] = useState({ text: '', type: '' });
-  const [zipUrl, setZipUrl] = useState(null);
-  const [zipFileName, setZipFileName] = useState('');
 
   // Kamus kategori beserta label Indonesia dan daftar ekstensi file-nya
   const categoriesDef = {
@@ -51,66 +46,17 @@ export default function OrganizePage() {
     
     setFolderName(topFolder);
     setFiles(selectedFiles);
-    if (zipUrl) URL.revokeObjectURL(zipUrl);
-    setZipUrl(null);
-    setZipFileName('');
     setMessage({ text: '', type: '' });
-  };
-
-  const downloadOrganizedZip = async (fallback = false) => {
-    setIsProcessing(true);
-    setMessage({ text: '', type: '' });
-    setProgress({ text: 'Menyiapkan arsip ZIP...', percent: 0, count: '' });
-
-    try {
-      const rootName = `Organized_${folderName || 'Files'}`;
-      const usedPaths = new Set();
-      const entries = files.map((file) => {
-        const category = getCategory(file.name);
-        const extensionIndex = file.name.lastIndexOf('.');
-        const stem = extensionIndex > 0 ? file.name.slice(0, extensionIndex) : file.name;
-        const extension = extensionIndex > 0 ? file.name.slice(extensionIndex) : '';
-        let name = file.name;
-        let suffix = 2;
-        let path = `${rootName}/${category}/${name}`;
-        while (usedPaths.has(path)) {
-          name = `${stem} (${suffix})${extension}`;
-          path = `${rootName}/${category}/${name}`;
-          suffix += 1;
-        }
-        usedPaths.add(path);
-        return { file, path };
-      });
-
-      const zipBlob = await createZipBlob(entries, (done, total, fileName) => {
-        setProgress({
-          text: `Menyiapkan ZIP: ${fileName}`,
-          percent: Math.round((done / total) * 100),
-          count: `${done} dari ${total}`
-        });
-      });
-      if (zipUrl) URL.revokeObjectURL(zipUrl);
-      setZipUrl(URL.createObjectURL(zipBlob));
-      setZipFileName(`${rootName}.zip`);
-      setMessage({
-        text: fallback
-          ? 'Browser HP tidak berhasil membuat folder langsung. Arsip ZIP sudah siap; ekstrak ZIP untuk melihat folder kategori.'
-          : 'Arsip ZIP berisi file yang sudah dikelompokkan dan siap diunduh.',
-        type: 'message-success'
-      });
-    } catch (error) {
-      setMessage({ text: `Gagal membuat ZIP: ${error.message}`, type: 'message-error' });
-    } finally {
-      setIsProcessing(false);
-    }
   };
 
   const handleStartOrganize = async () => {
     if (files.length === 0) return;
 
-    // Android may expose the picker while its file provider cannot reliably create nested files.
-    if (!window.showDirectoryPicker || isAndroid) {
-      await downloadOrganizedZip();
+    if (!window.showDirectoryPicker) {
+      setMessage({
+        text: 'Browser ini belum mendukung pembuatan folder langsung. Buka DupCut di Chrome atau Edge versi terbaru untuk memilih folder tujuan.',
+        type: 'message-error'
+      });
       return;
     }
 
@@ -118,13 +64,27 @@ export default function OrganizePage() {
       setIsProcessing(true);
       setMessage({ text: '', type: '' });
       
+      setProgress({ text: 'Pilih folder tujuan untuk hasil pemisahan.', percent: 0, count: '' });
       const targetDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      const organizedDirHandle = await targetDirHandle.getDirectoryHandle(`Organized_${folderName}`, { create: true });
+      const organizedDirHandle = await targetDirHandle.getDirectoryHandle(`Hasil_Pemisahan_${folderName}`, { create: true });
+      const usedNames = new Map();
 
       let successCount = 0;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const category = getCategory(file.name);
+        const categoryNames = usedNames.get(category) || new Set();
+        const extensionIndex = file.name.lastIndexOf('.');
+        const stem = extensionIndex > 0 ? file.name.slice(0, extensionIndex) : file.name;
+        const extension = extensionIndex > 0 ? file.name.slice(extensionIndex) : '';
+        let outputName = file.name;
+        let suffix = 2;
+        while (categoryNames.has(outputName)) {
+          outputName = `${stem} (${suffix})${extension}`;
+          suffix += 1;
+        }
+        categoryNames.add(outputName);
+        usedNames.set(category, categoryNames);
 
         setProgress({
           text: `Memindahkan ke folder [${category}]: ${file.name}`,
@@ -133,7 +93,7 @@ export default function OrganizePage() {
         });
 
         const categoryDirHandle = await organizedDirHandle.getDirectoryHandle(category, { create: true });
-        const newFileHandle = await categoryDirHandle.getFileHandle(file.name, { create: true });
+        const newFileHandle = await categoryDirHandle.getFileHandle(outputName, { create: true });
         const writable = await newFileHandle.createWritable();
         await writable.write(file);
         await writable.close();
@@ -147,8 +107,11 @@ export default function OrganizePage() {
       });
     } catch (err) {
       setIsProcessing(false);
-      if (err.name === 'AbortError') return;
-      await downloadOrganizedZip(true);
+      if (err.name === 'AbortError') {
+        setMessage({ text: 'Pemilihan folder tujuan dibatalkan.', type: '' });
+        return;
+      }
+      setMessage({ text: `Gagal membuat folder hasil: ${err.message || 'Terjadi kesalahan saat menulis file.'}`, type: 'message-error' });
     }
   };
 
@@ -164,10 +127,10 @@ export default function OrganizePage() {
     <div>
       <main className="shell">
         <header className="topbar">
-          <a className="brand" href="/app" aria-label="DupCut beranda" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
             <span>dupcut</span>
-          </a>
+          </div>
           <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
         </header>
 
@@ -255,17 +218,12 @@ export default function OrganizePage() {
                 style={{ marginTop: '24px', width: '100%' }}
                 onClick={handleStartOrganize}
               >
-                {isProcessing ? 'Memproses...' : isAndroid ? 'Rapihin & Siapkan ZIP' : 'Mulai Rapihin & Pisahkan ke Folder'}
+                {isProcessing ? progress.text || 'Memproses...' : 'Pilih folder tujuan & pisahkan'}
               </button>
               
               <p className="output-hint" style={{ marginTop: '12px' }}>
-                File asli di folder asal aman dan tidak dihapus. Di HP, hasil sortir diunduh sebagai ZIP berisi folder kategori.
+                Pilih folder tujuan saat diminta. DupCut membuat folder Hasil_Pemisahan di dalamnya dan menyalin file ke subfolder kategori; file asli tetap aman. Kamu juga bisa memilih folder sumber yang sama.
               </p>
-              {zipUrl && (
-                <a className="button button-primary rename-submit" href={zipUrl} download={zipFileName} style={{ display: 'block', marginTop: '12px', textAlign: 'center', textDecoration: 'none' }}>
-                  Unduh ZIP Hasil Kategori
-                </a>
-              )}
             </section>
           )}
 

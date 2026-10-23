@@ -199,10 +199,10 @@ export default function RenamePage() {
     <div>
       <main className="shell">
         <header className="topbar">
-          <a className="brand" href="/app" aria-label="DupCut beranda" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
             <span>dupcut</span>
-          </a>
+          </div>
           <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
         </header>
 
@@ -447,10 +447,10 @@ export default function RenamePage() {
         <div className="footer-container">
           <div className="footer-top">
             <div className="footer-brand-info">
-              <a href="/app" className="footer-logo">
+              <div className="footer-logo">
                 <img className="footer-logo-mark" src="/dupcut.png" alt="" />
                 <span>dupcut</span>
-              </a>
+              </div>
               <p className="footer-desc">
                 Aplikasi pengelola dan pembersih file lokal yang aman, cepat, dan menjaga privasi data perangkatmu sepenuhnya.
               </p>
