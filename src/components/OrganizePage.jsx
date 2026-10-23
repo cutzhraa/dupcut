@@ -74,7 +74,11 @@ export default function OrganizePage() {
   };
 
   const handleFolderSelect = (e) => {
-    const selectedFiles = Array.from(e.target.files);
+    const selectedFiles = Array.from(e.target.files).filter((file) => {
+      const lowerName = file.name.toLowerCase();
+      return !['desktop.ini', 'thumbs.db', '.ds_store', '.localized'].includes(lowerName)
+        && !lowerName.startsWith('._');
+    });
     if (selectedFiles.length === 0) return;
 
     const firstPath = selectedFiles[0].webkitRelativePath || selectedFiles[0].name;
@@ -97,27 +101,60 @@ export default function OrganizePage() {
     }
 
     let currentFileName = '';
+    let opfsRoot = null;
+    let stagingDirectoryName = null;
     try {
       setIsProcessing(true);
       setMessage({ text: '', type: '' });
       
       setProgress({ text: 'Pilih folder tujuan untuk hasil pemisahan.', percent: 0, count: '' });
       const targetDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      let stagingDirectory = null;
+
+      // If output is created inside the selected source folder, snapshot its files first.
+      // Otherwise writing the first result can invalidate other webkitdirectory File objects.
+      if (targetDirHandle.name === folderName) {
+        if (!navigator.storage?.getDirectory) {
+          throw new Error('Browser ini tidak mendukung penyimpanan sementara yang diperlukan untuk memisahkan file ke folder sumber yang sama. Pilih folder tujuan lain.');
+        }
+
+        opfsRoot = await navigator.storage.getDirectory();
+        stagingDirectoryName = `dupcut-staging-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        stagingDirectory = await opfsRoot.getDirectoryHandle(stagingDirectoryName, { create: true });
+
+        for (let i = 0; i < files.length; i++) {
+          currentFileName = files[i].name;
+          setProgress({
+            text: `Menyiapkan salinan sementara: ${currentFileName}`,
+            percent: Math.round(((i + 1) / files.length) * 40),
+            count: `${i + 1} dari ${files.length}`
+          });
+          const stagedHandle = await stagingDirectory.getFileHandle(`${i}.bin`, { create: true });
+          const stagedWriter = await stagedHandle.createWritable();
+          await stagedWriter.write(files[i]);
+          await stagedWriter.close();
+        }
+      }
+
       const organizedDirHandle = await targetDirHandle.getDirectoryHandle(`Hasil_Pemisahan_${folderName}`, { create: true });
       const usedNames = new Map();
+      const copyingProgressStart = stagingDirectory ? 40 : 0;
 
       let successCount = 0;
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        currentFileName = file.name;
-        const category = getCategory(file.name);
+        const sourceFile = files[i];
+        currentFileName = sourceFile.name;
+        const file = stagingDirectory
+          ? await (await stagingDirectory.getFileHandle(`${i}.bin`)).getFile()
+          : sourceFile;
+        const category = getCategory(sourceFile.name);
         const categoryNames = usedNames.get(category) || new Set();
-        const outputName = getUniqueFileName(file.name, categoryNames);
+        const outputName = getUniqueFileName(sourceFile.name, categoryNames);
         usedNames.set(category, categoryNames);
 
         setProgress({
-          text: `Memindahkan ke folder [${category}]: ${file.name}`,
-          percent: Math.round(((i + 1) / files.length) * 100),
+          text: `Menyalin ke folder [${category}]: ${sourceFile.name}`,
+          percent: Math.round(copyingProgressStart + ((i + 1) / files.length) * (100 - copyingProgressStart)),
           count: `${i + 1} dari ${files.length}`
         });
 
@@ -129,19 +166,26 @@ export default function OrganizePage() {
         successCount++;
       }
 
-      setIsProcessing(false);
       setMessage({
         text: `Berhasil! ${successCount} file telah dikelompokkan dan disalin ke dalam subfolder terstruktur.`,
         type: 'message-success'
       });
     } catch (err) {
-      setIsProcessing(false);
       if (err.name === 'AbortError') {
         setMessage({ text: 'Pemilihan folder tujuan dibatalkan.', type: '' });
-        return;
+      } else {
+        const fileDetail = currentFileName ? ` File yang sedang diproses: "${currentFileName}".` : '';
+        setMessage({ text: `Gagal membuat folder hasil: ${err.message || 'Terjadi kesalahan saat menulis file.'}${fileDetail}`, type: 'message-error' });
       }
-      const fileDetail = currentFileName ? ` File yang sedang diproses: "${currentFileName}".` : '';
-      setMessage({ text: `Gagal membuat folder hasil: ${err.message || 'Terjadi kesalahan saat menulis file.'}${fileDetail}`, type: 'message-error' });
+    } finally {
+      if (opfsRoot && stagingDirectoryName) {
+        try {
+          await opfsRoot.removeEntry(stagingDirectoryName, { recursive: true });
+        } catch {
+          // Temporary data can be cleaned up by the browser if explicit cleanup is unavailable.
+        }
+      }
+      setIsProcessing(false);
     }
   };
 

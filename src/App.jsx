@@ -9,6 +9,7 @@ import OrganizePage from './components/OrganizePage';
 import MorePage from './components/MorePage';
 import RemoveBgPage from './components/RemoveBgPage';
 import ConvertPage from './components/ConvertPage';
+import UpdateBanner from './components/UpdateBanner';
 
 const IMAGE_SIMILARITY_THRESHOLD = 6;
 const HASH_PROGRESS_SHARE = 0.8;
@@ -616,6 +617,7 @@ function AppContent() {
         <Route path="/convert" element={<ConvertPage />} />
       </Routes>
       {showBottomNav && <BottomNav />}
+      <UpdateBanner hasBottomNav={showBottomNav} />
     </div>
   );
 }
