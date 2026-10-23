@@ -1,6 +1,5 @@
 import SocialLinks from './SocialLinks';
-import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef } from 'react';
 
 export default function CropPage() {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -50,40 +49,37 @@ export default function CropPage() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      let width = img.naturalWidth;
-      let height = img.naturalHeight;
+      const sourceWidth = img.naturalWidth;
+      const sourceHeight = img.naturalHeight;
+      const sourceRatio = sourceWidth / sourceHeight;
+      const [ratioWidth, ratioHeight] = aspectRatio === 'free'
+        ? [sourceWidth, sourceHeight]
+        : aspectRatio.split(/[:x]/).map(Number);
+      const targetRatio = ratioWidth / ratioHeight;
 
-      if (aspectRatio === '1:1') {
-        const minDim = Math.min(width, height);
-        width = minDim;
-        height = minDim;
-      } else if (aspectRatio === '16:9') {
-        if (width / height > 16 / 9) {
-          width = height * (16 / 9);
-        } else {
-          height = width / (16 / 9);
-        }
-      } else if (aspectRatio === '3:4' || aspectRatio === '3x4') {
-        if (width / height > 3 / 4) {
-          width = height * (3 / 4);
-        } else {
-          height = width / (3 / 4);
-        }
-      } else if (aspectRatio === '4x6') {
-        if (width / height > 4 / 6) {
-          width = height * (4 / 6);
-        } else {
-          height = width / (4 / 6);
-        }
+      let cropWidth = sourceWidth;
+      let cropHeight = sourceHeight;
+      if (sourceRatio > targetRatio) {
+        cropWidth = sourceHeight * targetRatio;
+      } else if (sourceRatio < targetRatio) {
+        cropHeight = sourceWidth / targetRatio;
       }
+      const startX = (sourceWidth - cropWidth) / 2;
+      const startY = (sourceHeight - cropHeight) / 2;
+      canvas.width = Math.max(1, Math.round(cropWidth));
+      canvas.height = Math.max(1, Math.round(cropHeight));
 
-      canvas.width = width;
-      canvas.height = height;
-
-      const startX = (img.naturalWidth - width) / 2;
-      const startY = (img.naturalHeight - height) / 2;
-
-      ctx.drawImage(img, startX, startY, width, height, 0, 0, width, height);
+      ctx.drawImage(
+        img,
+        startX,
+        startY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
