@@ -56,6 +56,20 @@ export default function MorePage() {
                 <span className="picker-action">Buka menu <span aria-hidden="true">→</span></span>
             </Link>
 
+            <Link to="/mockup" className="picker-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <span className="picker-icon folder-icon" aria-hidden="true">▣</span>
+              <span className="picker-title">Mockup Frame Generator</span>
+              <span className="picker-hint">Bingkai screenshot atau kode dalam jendela browser estetik</span>
+              <span className="picker-action">Buka menu <span aria-hidden="true">→</span></span>
+            </Link>
+
+            <Link to="/carousel-grid" className="picker-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <span className="picker-icon folder-icon" aria-hidden="true">▦</span>
+              <span className="picker-title">Auto Carousel & Grid</span>
+              <span className="picker-hint">Gabungkan hingga 8 foto menjadi kolase PNG estetik</span>
+              <span className="picker-action">Buka menu <span aria-hidden="true">→</span></span>
+            </Link>
+
           </div>
         </section>
 
