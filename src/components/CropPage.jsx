@@ -97,7 +97,7 @@ export default function CropPage() {
         if (typeof window.showDirectoryPicker === 'function') {
           try {
             const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-            const croppedDirHandle = await dirHandle.directoryHandle('CroppedImages', { create: true });
+            const croppedDirHandle = await dirHandle.getDirectoryHandle('CroppedImages', { create: true });
             const fileHandle = await croppedDirHandle.getFileHandle(newFileName, { create: true });
             const writable = await fileHandle.createWritable();
             await blob.stream().pipeTo(writable);
@@ -147,7 +147,7 @@ export default function CropPage() {
             <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
             <span>dupcut</span>
           </a>
-          <span className="privacy-pill"><span></span> Privat di perangkat kamu[cite: 6, 7]</span>
+          <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
         </header>
 
         <section className="intro" aria-labelledby="page-title">

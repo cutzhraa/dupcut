@@ -11,7 +11,7 @@ export default function LandingPage() {
                 <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
                 <span style={{ fontWeight: 700, fontSize: '18px', color: '#1a1a1a' }}>dupcut</span>
             </a>
-            <span className="privacy-pill"><span></span> Privat di perangkat kamu[cite: 6, 7]</span>
+            <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
         </header>
 
         <section className="intro" aria-labelledby="page-title" style={{ textAlign: 'center', padding: '40px 0 20px' }}>

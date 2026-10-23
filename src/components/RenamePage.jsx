@@ -203,7 +203,7 @@ export default function RenamePage() {
             <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
             <span>dupcut</span>
           </a>
-          <span className="privacy-pill"><span></span> Privat di perangkat kamu[cite: 6, 7]</span>
+          <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
         </header>
 
         <section className="intro" aria-labelledby="page-title">

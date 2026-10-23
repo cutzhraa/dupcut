@@ -66,7 +66,7 @@ export default function OrganizePage() {
       setMessage({ text: '', type: '' });
       
       const targetDirHandle = await window.showDirectoryPicker();
-      const organizedDirHandle = await targetDirHandle.directoryHandle(`Organized_${folderName}`, { create: true });
+      const organizedDirHandle = await targetDirHandle.getDirectoryHandle(`Organized_${folderName}`, { create: true });
 
       let successCount = 0;
       for (let i = 0; i < files.length; i++) {
@@ -79,7 +79,7 @@ export default function OrganizePage() {
           count: `${i + 1} dari ${files.length}`
         });
 
-        const categoryDirHandle = await organizedDirHandle.directoryHandle(category, { create: true });
+        const categoryDirHandle = await organizedDirHandle.getDirectoryHandle(category, { create: true });
         const newFileHandle = await categoryDirHandle.getFileHandle(file.name, { create: true });
         const writable = await newFileHandle.createWritable();
         await writable.write(file);
@@ -119,7 +119,7 @@ export default function OrganizePage() {
             <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
             <span>dupcut</span>
           </a>
-          <span className="privacy-pill"><span></span> Privat di perangkat kamu[cite: 6, 7]</span>
+          <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
         </header>
 
         <section className="intro" aria-labelledby="page-title">

@@ -368,7 +368,7 @@ function HomePage() {
             <img src="/images/dupcut.png" alt="DupCut Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
             <span>dupcut</span>
           </a>
-          <span className="privacy-pill"><span></span> Privat di perangkat kamu[cite: 6, 7]</span>
+          <span className="privacy-pill"><span></span> Privat di perangkat kamu</span>
         </header>
 
         <section className="intro" aria-labelledby="page-title">
@@ -376,7 +376,7 @@ function HomePage() {
           <h1 id="page-title">Yang sama, ketemu.<br /><span>Yang penting, tetap aman.</span></h1>
           <p className="intro-copy">
             Pilih foto atau folder. DupCut mencari file identik dan foto serupa,
-            lalu mempertahankan foto dengan resolusi tertinggi—semuanya tanpa upload[cite: 6, 7].
+            lalu mempertahankan foto dengan resolusi tertinggi—semuanya tanpa upload.
           </p>
         </section>
 
@@ -551,7 +551,7 @@ function HomePage() {
                 <span>dupcut</span>
               </a>
               <p className="footer-desc">
-                Aplikasi pengelola dan pembersih file lokal yang aman, cepat, dan menjaga privasi data perangkatmu sepenuhnya[cite: 6, 7].
+                Aplikasi pengelola dan pembersih file lokal yang aman, cepat, dan menjaga privasi data perangkatmu sepenuhnya.
               </p>
             </div>
             
