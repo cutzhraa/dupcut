@@ -15,13 +15,13 @@ export default function LandingPage() {
         </header>
 
         <section className="intro" aria-labelledby="page-title" style={{ textAlign: 'center', padding: '40px 0 20px' }}>
-          <p className="eyebrow">APLIKASI UTILITY & MEDIA LOKAL</p>
+          <p className="eyebrow">APLIKASI PENGELOLA FILE & MEDIA</p>
           <h1 id="page-title" style={{ fontSize: '2.5rem', lineHeight: '1.2', marginTop: '10px' }}>
             Kelola, Bersihkan, & Edit File<br />
             <span>Tanpa Upload ke Server.</span>
           </h1>
           <p className="intro-copy" style={{ maxWidth: '600px', margin: '20px auto 0' }}>
-            DupCut adalah alat pengelola file dan foto lokal yang aman, super cepat, dan menjaga privasi data perangkatmu sepenuhnya tanpa koneksi ke cloud.
+            DupCut membantu merapikan file dan foto: cari duplikat, kelompokkan file ke folder, ubah nama, crop, konversi gambar, dan hapus background langsung di browser.
           </p>
 
           <div style={{ marginTop: '32px' }}>
