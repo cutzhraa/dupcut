@@ -1,13 +1,22 @@
 import SocialLinks from './SocialLinks';
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 export default function ConvertPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageName, setImageName] = useState('');
   const [targetFormat, setTargetFormat] = useState('image/jpeg');
   const [convertedUrl, setConvertedUrl] = useState(null);
+  const [downloadUrl, setDownloadUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [conversionError, setConversionError] = useState('');
+
+  useEffect(() => () => {
+    if (downloadUrl?.startsWith('blob:')) URL.revokeObjectURL(downloadUrl);
+  }, [downloadUrl]);
+
+  useEffect(() => () => {
+    if (selectedImage) URL.revokeObjectURL(selectedImage);
+  }, [selectedImage]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -15,20 +24,86 @@ export default function ConvertPage() {
       setImageName(file.name);
       setSelectedImage(URL.createObjectURL(file));
       setConvertedUrl(null);
+      setDownloadUrl(null);
+      setConversionError('');
     }
   };
 
-  const handleConvert = () => {
+  const blobFromCanvas = (canvas, type = 'image/png') => new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('Gagal membuat gambar.'));
+    }, type);
+  });
+
+  const createIco = async (image) => {
+    const sizes = [16, 32, 48, 64, 128, 256];
+    const pngs = await Promise.all(sizes.map(async (size) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas tidak tersedia di browser ini.');
+      const scale = Math.min(size / image.naturalWidth, size / image.naturalHeight);
+      const width = Math.round(image.naturalWidth * scale);
+      const height = Math.round(image.naturalHeight * scale);
+      context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
+      return blobFromCanvas(canvas);
+    }));
+
+    const headerSize = 6 + sizes.length * 16;
+    const totalSize = pngs.reduce((total, blob) => total + blob.size, headerSize);
+    const output = new Uint8Array(totalSize);
+    const view = new DataView(output.buffer);
+    view.setUint16(0, 0, true);
+    view.setUint16(2, 1, true);
+    view.setUint16(4, sizes.length, true);
+    let offset = headerSize;
+    pngs.forEach((blob, index) => {
+      const entry = 6 + index * 16;
+      const size = sizes[index];
+      output[entry] = size === 256 ? 0 : size;
+      output[entry + 1] = size === 256 ? 0 : size;
+      output[entry + 2] = 0;
+      output[entry + 3] = 0;
+      view.setUint16(entry + 4, 1, true);
+      view.setUint16(entry + 6, 32, true);
+      view.setUint32(entry + 8, blob.size, true);
+      view.setUint32(entry + 12, offset, true);
+      offset += blob.size;
+    });
+    let dataOffset = headerSize;
+    for (const png of pngs) {
+      output.set(new Uint8Array(await png.arrayBuffer()), dataOffset);
+      dataOffset += png.size;
+    }
+    return new Blob([output], { type: 'image/x-icon' });
+  };
+
+  const handleConvert = async () => {
     if (!selectedImage) return;
     setIsProcessing(true);
+    setConversionError('');
 
-    const img = new Image();
-    img.src = selectedImage;
-    img.onload = () => {
+    try {
+      const img = new Image();
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Gambar tidak dapat dibuka.'));
+        img.src = selectedImage;
+      });
+      if (targetFormat === 'image/x-icon') {
+        const icoBlob = await createIco(img);
+        const icoUrl = URL.createObjectURL(icoBlob);
+        setConvertedUrl(selectedImage);
+        setDownloadUrl(icoUrl);
+        return;
+      }
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas tidak tersedia di browser ini.');
       
       // Beri background putih untuk format yang tidak mendukung transparansi (seperti JPEG / BMP)
       if (targetFormat === 'image/jpeg' || targetFormat === 'image/bmp') {
@@ -37,11 +112,25 @@ export default function ConvertPage() {
       }
 
       ctx.drawImage(img, 0, 0);
+
+      if (targetFormat === 'image/svg+xml') {
+        const pngData = canvas.toDataURL('image/png');
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image width="${canvas.width}" height="${canvas.height}" href="${pngData}" xlink:href="${pngData}" /></svg>`;
+        const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        const svgUrl = URL.createObjectURL(svgBlob);
+        setConvertedUrl(pngData);
+        setDownloadUrl(svgUrl);
+        return;
+      }
       
       const dataUrl = canvas.toDataURL(targetFormat, 0.9);
       setConvertedUrl(dataUrl);
+      setDownloadUrl(dataUrl);
+    } catch (error) {
+      setConversionError(`Konversi gagal: ${error.message}`);
+    } finally {
       setIsProcessing(false);
-    };
+    }
   };
 
   const getExtension = (mime) => {
@@ -51,6 +140,8 @@ export default function ConvertPage() {
       case 'image/webp': return 'webp';
       case 'image/bmp': return 'bmp';
       case 'image/gif': return 'gif';
+      case 'image/x-icon': return 'ico';
+      case 'image/svg+xml': return 'svg';
       default: return 'jpg';
     }
   };
@@ -123,6 +214,8 @@ export default function ConvertPage() {
                   <option value="image/webp">WebP (Optimal & Ukuran Kecil)</option>
                   <option value="image/bmp">BMP (Bitmap Tanpa Kompresi)</option>
                   <option value="image/gif">GIF (Grafik Animasi/Statis)</option>
+                  <option value="image/x-icon">ICO (Ikon multi-ukuran)</option>
+                  <option value="image/svg+xml">SVG (Vektor dengan gambar tertanam)</option>
                 </select>
               </div>
 
@@ -135,6 +228,8 @@ export default function ConvertPage() {
               >
                 {isProcessing ? 'Mengonversi...' : 'Konversi Sekarang'}
               </button>
+
+              {conversionError && <p className="message message-error" role="alert">{conversionError}</p>}
 
               {convertedUrl && (
                 <div style={{ marginTop: '32px', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '24px' }}>
@@ -159,7 +254,7 @@ export default function ConvertPage() {
                   {/* Di-center menggunakan flexbox */}
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <a
-                      href={convertedUrl}
+                      href={downloadUrl}
                       download={`dupcut-converted.${getExtension(targetFormat)}`}
                       className="button button-primary"
                       style={{ textDecoration: 'none', display: 'inline-block', width: 'auto', padding: '12px 24px' }}
