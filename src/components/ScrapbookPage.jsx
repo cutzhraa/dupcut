@@ -7,6 +7,12 @@ const LAYOUTS = [
   { id: 'collage', name: 'Kolase', hint: 'Satu foto utama', icon: '▧' },
   { id: 'scatter', name: 'Scrapbook', hint: 'Sobek, oval & tumpuk', icon: '✳' },
 ];
+const PHOTO_SHAPES = [
+  { id: 'torn', name: 'Sobekan', hint: 'Tepi kertas alami', icon: '▤' },
+  { id: 'polaroid', name: 'Polaroid', hint: 'Bingkai klasik', icon: '▣' },
+  { id: 'arch', name: 'Arch', hint: 'Lengkung lembut', icon: '⌂' },
+  { id: 'oval', name: 'Oval', hint: 'Potongan organik', icon: '⬭' },
+];
 const THEMES = [
   { name: 'Vintage journal', color: '#ead9b9', ink: '#594532', accent: '#a75f43', motifs: ['✿', '❧', '✦', '◉'], wash: '#b88b53' },
   { name: 'Flower garden', color: '#e6ead8', ink: '#465b48', accent: '#b36b70', motifs: ['✿', '❀', '❧', '✽'], wash: '#8caa80' },
@@ -42,6 +48,9 @@ function tracePhotoWindow(context, shape, x, y, width, height, seed) {
     context.closePath();
   } else if (shape === 'torn') {
     traceTornEdge(context, x, y, width, height, seed, 4);
+  } else if (shape === 'polaroid') {
+    context.beginPath();
+    context.roundRect(x, y, width, height, 5);
   } else {
     context.beginPath();
     context.ellipse(x + width / 2, y + height / 2, width * .47, height * .47, 0, 0, Math.PI * 2);
@@ -52,6 +61,7 @@ export default function ScrapbookPage() {
   const [photos, setPhotos] = useState([]);
   const [theme, setTheme] = useState(0);
   const [layout, setLayout] = useState('scatter');
+  const [photoShape, setPhotoShape] = useState('torn');
   const [title, setTitle] = useState('little moments');
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
@@ -213,31 +223,34 @@ export default function ScrapbookPage() {
       context.shadowColor = 'rgba(65, 48, 32, .22)';
       context.shadowBlur = 18;
       context.shadowOffsetY = 8;
-      const torn = layout === 'scatter';
       const outerX = -cellWidth / 2;
       const outerY = -cellHeight / 2;
       context.fillStyle = '#fffdf8';
-      if (torn) {
+      if (photoShape === 'torn') {
         traceTornEdge(context, outerX, outerY, cellWidth, cellHeight, index, 6);
         context.fill();
+      } else if (photoShape === 'oval') {
+        context.beginPath();
+        context.ellipse(0, 0, cellWidth / 2, cellHeight / 2, 0, 0, Math.PI * 2);
+        context.fill();
+      } else if (photoShape === 'arch') {
+        tracePhotoWindow(context, 'arch', outerX, outerY, cellWidth, cellHeight, index);
+        context.fill();
       } else {
-        context.fillRect(outerX, outerY, cellWidth, cellHeight);
+        context.beginPath();
+        context.roundRect(outerX, outerY, cellWidth, cellHeight, 7);
+        context.fill();
       }
       context.shadowColor = 'transparent';
       const image = photo.bitmap;
       const frame = 15;
       const boxWidth = cellWidth - frame * 2;
       const boxHeight = cellHeight - 58;
-      const photoShape = layout === 'scatter' ? ['arch', 'torn', 'oval', 'arch', 'torn', 'oval'][index % 6] : 'torn';
       const scale = Math.max(boxWidth / image.naturalWidth, boxHeight / image.naturalHeight);
       const drawWidth = image.naturalWidth * scale;
       const drawHeight = image.naturalHeight * scale;
       context.save();
-      if (torn) tracePhotoWindow(context, photoShape, -boxWidth / 2, -cellHeight / 2 + frame, boxWidth, boxHeight, index + 31);
-      else {
-        context.beginPath();
-        context.rect(-boxWidth / 2, -cellHeight / 2 + frame, boxWidth, boxHeight);
-      }
+      tracePhotoWindow(context, photoShape, -boxWidth / 2, -cellHeight / 2 + frame, boxWidth, boxHeight, index + 31);
       context.clip();
       context.drawImage(image, -drawWidth / 2, -cellHeight / 2 + frame + (boxHeight - drawHeight) / 2, drawWidth, drawHeight);
       context.restore();
@@ -256,7 +269,7 @@ export default function ScrapbookPage() {
       context.globalAlpha = 1;
       context.restore();
     });
-  }, [photos, theme, title, ready, layout]);
+  }, [photos, theme, title, ready, layout, photoShape]);
 
   const handleFiles = (event) => {
     const selected = Array.from(event.target.files || []);
@@ -295,6 +308,7 @@ export default function ScrapbookPage() {
         <button type="button" className="button button-secondary" onClick={() => inputRef.current?.click()}>{photos.length ? 'Ganti foto' : 'Unggah foto'}</button>
         {photos.length > 0 && <div className="carousel-file-list">{photos.map((photo, index) => <div className="carousel-file-row" key={`${photo.file.name}-${index}`}><img src={photo.url} alt="" /><span>{photo.file.name}</span></div>)}</div>}
         <fieldset className="carousel-layout-options scrapbook-layout-options"><legend>Pilih susunan foto</legend>{LAYOUTS.map((item) => <label key={item.id} className={layout === item.id ? 'selected' : ''}><input type="radio" name="scrapbook-layout" value={item.id} checked={layout === item.id} onChange={() => setLayout(item.id)} /><span>{item.icon}</span><b>{item.name}</b><small>{item.hint}</small></label>)}</fieldset>
+        <fieldset className="scrapbook-shape-options"><legend>Bentuk potongan foto</legend><div>{PHOTO_SHAPES.map((item) => <button key={item.id} type="button" className={photoShape === item.id ? 'selected' : ''} onClick={() => setPhotoShape(item.id)} aria-pressed={photoShape === item.id}><span className={`shape-preview shape-${item.id}`} aria-hidden="true">{item.icon}</span><b>{item.name}</b><small>{item.hint}</small></button>)}</div></fieldset>
         <label className="mockup-title-field"><span className="mockup-label">Judul halaman</span><input value={title} maxLength={32} onChange={(event) => setTitle(event.target.value)} /></label>
         <div className="carousel-background-picker"><span className="mockup-label">Pilih gaya scrapbook</span><div className="scrapbook-themes">{THEMES.map((item, index) => <button key={item.name} type="button" className={`scrapbook-theme ${theme === index ? 'active' : ''}`} onClick={() => setTheme(index)} aria-pressed={theme === index}><span className="scrapbook-theme-paper" style={{ backgroundColor: item.color, color: item.ink }}><i>{item.motifs[0]}</i><i>{item.motifs[1]}</i><i>{item.motifs[2]}</i></span><b>{item.name}</b></button>)}</div></div>
         {error && <p className="message message-error" role="alert">{error}</p>}

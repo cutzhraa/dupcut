@@ -161,6 +161,18 @@ button:disabled {
 .scrapbook-layout-options label { grid-template-columns: 1fr; justify-items: center; gap: 3px; min-height: 74px; text-align: center; }
 .scrapbook-layout-options label > span { grid-row: auto; }
 .scrapbook-layout-options small { font-size: 8px; }
+.scrapbook-shape-options { margin: 0; padding: 0; border: 0; }
+.scrapbook-shape-options legend { margin-bottom: 8px; color: #56645a; font-size: 10px; font-weight: 700; }
+.scrapbook-shape-options > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.scrapbook-shape-options button { display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: 2px 8px; min-height: 54px; padding: 6px 8px; border: 1px solid #e3e8e1; border-radius: 9px; color: #35453a; background: #fff; text-align: left; cursor: pointer; }
+.scrapbook-shape-options button.selected { border-color: #70937a; background: #f3f7f2; box-shadow: 0 0 0 1px #70937a33; }
+.scrapbook-shape-options b { font-size: 9px; }
+.scrapbook-shape-options small { color: #858d86; font-size: 8px; }
+.shape-preview { display: grid; width: 32px; height: 36px; grid-row: span 2; place-items: center; border: 2px solid #aa8d69; color: #80674c; background: linear-gradient(145deg, #f5e9d5, #fffaf0); font-size: 16px; }
+.shape-torn { clip-path: polygon(5% 4%, 28% 8%, 45% 3%, 70% 7%, 96% 2%, 91% 30%, 97% 49%, 92% 74%, 97% 95%, 64% 91%, 43% 97%, 17% 92%, 4% 97%, 8% 67%, 2% 45%, 8% 24%); }
+.shape-polaroid { border-width: 2px 2px 7px; border-radius: 2px; }
+.shape-arch { border-radius: 18px 18px 2px 2px; }
+.shape-oval { width: 31px; height: 25px; justify-self: center; border-radius: 50%; }
 
 @media (max-width: 420px) {
   .scrapbook-themes { grid-template-columns: 1fr; }
