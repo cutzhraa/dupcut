@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import SocialLinks from './SocialLinks';
 
 const MAX_PHOTOS = 12;
+const LAYOUTS = [
+  { id: 'grid', name: 'Grid rapi', hint: 'Kotak seimbang', icon: '▦' },
+  { id: 'collage', name: 'Kolase', hint: 'Satu foto utama', icon: '▧' },
+  { id: 'scatter', name: 'Scrapbook', hint: 'Miring & playful', icon: '✳' },
+];
 const PAPERS = [
   { name: 'Krem', color: '#f4ead8', ink: '#554a3c' },
   { name: 'Pink', color: '#f5dfe2', ink: '#684b50' },
@@ -12,6 +17,7 @@ const PAPERS = [
 export default function ScrapbookPage() {
   const [photos, setPhotos] = useState([]);
   const [paper, setPaper] = useState(0);
+  const [layout, setLayout] = useState('scatter');
   const [title, setTitle] = useState('little moments');
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
@@ -44,13 +50,50 @@ export default function ScrapbookPage() {
     const context = canvas?.getContext('2d');
     if (!context) return;
     const width = 1200;
-    const columns = photos.length < 3 ? photos.length : 3;
-    const rows = Math.ceil(photos.length / columns);
-    const cellWidth = 330;
-    const cellHeight = 370;
-    const gap = 34;
     const top = 210;
-    const height = top + rows * (cellHeight + gap) + 70;
+    const gap = 32;
+    let tiles;
+    let height;
+    if (layout === 'grid') {
+      const columns = photos.length < 3 ? Math.max(1, photos.length) : 3;
+      const rows = Math.ceil(photos.length / columns);
+      const cellWidth = columns === 1 ? 650 : 340;
+      const cellHeight = 370;
+      height = top + rows * (cellHeight + gap) + 70;
+      tiles = photos.map((_, index) => {
+        const row = Math.floor(index / columns);
+        const rowCount = Math.min(columns, photos.length - row * columns);
+        const rowWidth = rowCount * cellWidth + (rowCount - 1) * gap;
+        return { x: (width - rowWidth) / 2 + (index % columns) * (cellWidth + gap), y: top + row * (cellHeight + gap), width: cellWidth, height: cellHeight, tilt: 0 };
+      });
+    } else if (layout === 'collage' && photos.length > 1) {
+      const smallWidth = 230;
+      const smallHeight = 245;
+      const sideCount = photos.length - 1;
+      const sideRows = Math.ceil(sideCount / 2);
+      height = top + Math.max(560, sideRows * (smallHeight + gap)) + 70;
+      tiles = [{ x: 70, y: top + (height - top - 70 - 560) / 2, width: 550, height: 560, tilt: -0.012 }];
+      for (let index = 1; index < photos.length; index += 1) {
+        const sideIndex = index - 1;
+        const sideColumns = sideCount === 1 ? 1 : 2;
+        const row = Math.floor(sideIndex / sideColumns);
+        const rowCount = Math.min(sideColumns, sideCount - row * sideColumns);
+        const rowWidth = rowCount * smallWidth + (rowCount - 1) * gap;
+        tiles.push({ x: 660 + (rowWidth === smallWidth ? (2 * smallWidth + gap - rowWidth) / 2 : (sideIndex % sideColumns) * (smallWidth + gap)), y: top + row * (smallHeight + gap), width: smallWidth, height: smallHeight, tilt: [-0.025, 0.03, -0.015, 0.02][index % 4] });
+      }
+    } else {
+      const columns = photos.length <= 2 ? photos.length : photos.length <= 6 ? 2 : 3;
+      const rows = Math.ceil(photos.length / columns);
+      const cellWidth = columns === 1 ? 650 : columns === 2 ? 440 : 330;
+      const cellHeight = columns === 2 ? 350 : 370;
+      height = top + rows * (cellHeight + gap) + 70;
+      tiles = photos.map((_, index) => {
+        const row = Math.floor(index / columns);
+        const rowCount = Math.min(columns, photos.length - row * columns);
+        const rowWidth = rowCount * cellWidth + (rowCount - 1) * gap;
+        return { x: (width - rowWidth) / 2 + (index % columns) * (cellWidth + gap), y: top + row * (cellHeight + gap), width: cellWidth, height: cellHeight, tilt: [-0.055, 0.045, -0.025, 0.06, -0.04, 0.025][index % 6] };
+      });
+    }
     const selectedPaper = PAPERS[paper];
     canvas.width = width * 2;
     canvas.height = height * 2;
@@ -77,15 +120,11 @@ export default function ScrapbookPage() {
     context.globalAlpha = 1;
 
     photos.forEach((photo, index) => {
-      const row = Math.floor(index / columns);
-      const rowCount = Math.min(columns, photos.length - row * columns);
-      const rowWidth = rowCount * cellWidth + (rowCount - 1) * gap;
-      const x = (width - rowWidth) / 2 + (index % columns) * (cellWidth + gap);
-      const y = top + row * (cellHeight + gap);
-      const tilt = [-0.045, 0.035, -0.025, 0.05, -0.035][index % 5];
+      const tile = tiles[index];
+      const { x, y, width: cellWidth, height: cellHeight } = tile;
       context.save();
       context.translate(x + cellWidth / 2, y + cellHeight / 2);
-      context.rotate(tilt);
+      context.rotate(tile.tilt);
       context.shadowColor = 'rgba(65, 48, 32, .22)';
       context.shadowBlur = 18;
       context.shadowOffsetY = 8;
@@ -114,7 +153,7 @@ export default function ScrapbookPage() {
       context.globalAlpha = 1;
       context.restore();
     });
-  }, [photos, paper, title, ready]);
+  }, [photos, paper, title, ready, layout]);
 
   const handleFiles = (event) => {
     const selected = Array.from(event.target.files || []);
@@ -152,6 +191,7 @@ export default function ScrapbookPage() {
         <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleFiles} className="visually-hidden" />
         <button type="button" className="button button-secondary" onClick={() => inputRef.current?.click()}>{photos.length ? 'Ganti foto' : 'Unggah foto'}</button>
         {photos.length > 0 && <div className="carousel-file-list">{photos.map((photo, index) => <div className="carousel-file-row" key={`${photo.file.name}-${index}`}><img src={photo.url} alt="" /><span>{photo.file.name}</span></div>)}</div>}
+        <fieldset className="carousel-layout-options scrapbook-layout-options"><legend>Pilih susunan foto</legend>{LAYOUTS.map((item) => <label key={item.id} className={layout === item.id ? 'selected' : ''}><input type="radio" name="scrapbook-layout" value={item.id} checked={layout === item.id} onChange={() => setLayout(item.id)} /><span>{item.icon}</span><b>{item.name}</b><small>{item.hint}</small></label>)}</fieldset>
         <label className="mockup-title-field"><span className="mockup-label">Judul halaman</span><input value={title} maxLength={32} onChange={(event) => setTitle(event.target.value)} /></label>
         <div className="carousel-background-picker"><span className="mockup-label">Warna kertas</span><div className="mockup-swatches">{PAPERS.map((item, index) => <button key={item.name} type="button" title={item.name} aria-label={`Kertas ${item.name}`} className={paper === index ? 'active' : ''} style={{ background: item.color }} onClick={() => setPaper(index)} />)}</div></div>
         {error && <p className="message message-error" role="alert">{error}</p>}
