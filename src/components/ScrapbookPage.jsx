@@ -3,15 +3,10 @@ import SocialLinks from './SocialLinks';
 
 const MAX_PHOTOS = 12;
 const LAYOUTS = [
-  { id: 'grid', name: 'Grid rapi', hint: 'Kotak seimbang', icon: '▦' },
-  { id: 'collage', name: 'Kolase', hint: 'Satu foto utama', icon: '▧' },
-  { id: 'scatter', name: 'Scrapbook', hint: 'Sobek, oval & tumpuk', icon: '✳' },
-];
-const PHOTO_SHAPES = [
-  { id: 'torn', name: 'Sobekan', hint: 'Tepi kertas alami', icon: '▤' },
-  { id: 'polaroid', name: 'Polaroid', hint: 'Bingkai klasik', icon: '▣' },
-  { id: 'arch', name: 'Arch', hint: 'Lengkung lembut', icon: '⌂' },
-  { id: 'oval', name: 'Oval', hint: 'Potongan organik', icon: '⬭' },
+  { id: 'paper', mode: 'scatter', shape: 'torn', name: 'Paper collage', hint: 'Sobekan bertumpuk', icon: '✂' },
+  { id: 'polaroid', mode: 'collage', shape: 'polaroid', name: 'Polaroid diary', hint: 'Foto utama + snapshot', icon: '▣' },
+  { id: 'arch', mode: 'arch', shape: 'arch', name: 'Arch journal', hint: 'Jendela lengkung', icon: '⌂' },
+  { id: 'botanical', mode: 'botanical', shape: 'oval', name: 'Botanical', hint: 'Potongan oval bertingkat', icon: '❀' },
 ];
 const THEMES = [
   { name: 'Vintage journal', color: '#ead9b9', ink: '#594532', accent: '#a75f43', motifs: ['✿', '❧', '✦', '◉'], wash: '#b88b53' },
@@ -60,8 +55,7 @@ function tracePhotoWindow(context, shape, x, y, width, height, seed) {
 export default function ScrapbookPage() {
   const [photos, setPhotos] = useState([]);
   const [theme, setTheme] = useState(0);
-  const [layout, setLayout] = useState('scatter');
-  const [photoShape, setPhotoShape] = useState('torn');
+  const [layout, setLayout] = useState('paper');
   const [title, setTitle] = useState('little moments');
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
@@ -96,9 +90,12 @@ export default function ScrapbookPage() {
     const width = 1200;
     const top = 210;
     const gap = 32;
+    const selectedDesign = LAYOUTS.find((item) => item.id === layout) || LAYOUTS[0];
+    const layoutMode = selectedDesign.mode;
+    const photoShape = selectedDesign.shape;
     let tiles;
     let height;
-    if (layout === 'grid') {
+    if (layoutMode === 'grid') {
       const columns = photos.length < 3 ? Math.max(1, photos.length) : 3;
       const rows = Math.ceil(photos.length / columns);
       const cellWidth = columns === 1 ? 650 : 340;
@@ -110,21 +107,51 @@ export default function ScrapbookPage() {
         const rowWidth = rowCount * cellWidth + (rowCount - 1) * gap;
         return { x: (width - rowWidth) / 2 + (index % columns) * (cellWidth + gap), y: top + row * (cellHeight + gap), width: cellWidth, height: cellHeight, tilt: 0 };
       });
-    } else if (layout === 'collage' && photos.length > 1) {
+    } else if (layoutMode === 'collage') {
       const smallWidth = 230;
       const smallHeight = 245;
       const sideCount = photos.length - 1;
       const sideRows = Math.ceil(sideCount / 2);
       height = top + Math.max(560, sideRows * (smallHeight + gap)) + 70;
-      tiles = [{ x: 70, y: top + (height - top - 70 - 560) / 2, width: 550, height: 560, tilt: -0.012 }];
-      for (let index = 1; index < photos.length; index += 1) {
-        const sideIndex = index - 1;
-        const sideColumns = sideCount === 1 ? 1 : 2;
-        const row = Math.floor(sideIndex / sideColumns);
-        const rowCount = Math.min(sideColumns, sideCount - row * sideColumns);
-        const rowWidth = rowCount * smallWidth + (rowCount - 1) * gap;
-        tiles.push({ x: 660 + (rowWidth === smallWidth ? (2 * smallWidth + gap - rowWidth) / 2 : (sideIndex % sideColumns) * (smallWidth + gap)), y: top + row * (smallHeight + gap), width: smallWidth, height: smallHeight, tilt: [-0.025, 0.03, -0.015, 0.02][index % 4] });
+      if (photos.length === 1) {
+        tiles = [{ x: 325, y: top, width: 550, height: 560, tilt: -0.025 }];
+      } else {
+        tiles = [{ x: 70, y: top + (height - top - 70 - 560) / 2, width: 550, height: 560, tilt: -0.012 }];
+        for (let index = 1; index < photos.length; index += 1) {
+          const sideIndex = index - 1;
+          const sideColumns = sideCount === 1 ? 1 : 2;
+          const row = Math.floor(sideIndex / sideColumns);
+          const rowCount = Math.min(sideColumns, sideCount - row * sideColumns);
+          const rowWidth = rowCount * smallWidth + (rowCount - 1) * gap;
+          const drift = row % 2 ? 17 : -9;
+          tiles.push({ x: 660 + (rowWidth === smallWidth ? (2 * smallWidth + gap - rowWidth) / 2 : (sideIndex % sideColumns) * (smallWidth + gap)) + drift, y: top + row * (smallHeight + gap) + (sideIndex % 2 ? 13 : 0), width: smallWidth, height: smallHeight, tilt: [-0.04, 0.035, -0.02, 0.03][index % 4] });
+        }
       }
+    } else if (layoutMode === 'arch') {
+      const columns = photos.length === 1 ? 1 : 2;
+      const rows = Math.ceil(photos.length / columns);
+      const tileWidth = photos.length === 1 ? 460 : 365;
+      const tileHeight = photos.length === 1 ? 500 : 420;
+      height = top + rows * 365 + 100;
+      tiles = photos.map((_, index) => {
+        const row = Math.floor(index / columns);
+        const rowCount = Math.min(columns, photos.length - row * columns);
+        const rowWidth = rowCount * tileWidth + (rowCount - 1) * 65;
+        const drift = row % 2 ? 30 : -18;
+        return { x: (width - rowWidth) / 2 + (index % columns) * (tileWidth + 65) + drift, y: top + row * 365 + (index % 2) * 20, width: tileWidth, height: tileHeight, tilt: [-0.025, 0.018, 0.02, -0.018][index % 4] };
+      });
+    } else if (layoutMode === 'botanical') {
+      const rows = Math.ceil(photos.length / 2);
+      const sizes = [[390, 330], [320, 380], [350, 310], [300, 350]];
+      height = top + rows * 340 + 100;
+      tiles = photos.map((_, index) => {
+        const row = Math.floor(index / 2);
+        const column = photos.length === 1 ? 0 : index % 2;
+        const [tileWidth, tileHeight] = photos.length === 1 ? [500, 440] : sizes[index % sizes.length];
+        const x = photos.length === 1 ? (width - tileWidth) / 2 : (column === 0 ? 145 : 690) + (row % 2 ? (column === 0 ? 35 : -30) : 0);
+        const y = top + row * 340 + (column ? 74 : 0);
+        return { x, y, width: tileWidth, height: tileHeight, tilt: [-0.035, 0.045, 0.018, -0.05][index % 4] };
+      });
     } else {
       // Uneven paper cutouts overlap like a handmade journal page instead of sitting in a table.
       const rowCount = Math.ceil(photos.length / 3);
@@ -245,7 +272,7 @@ export default function ScrapbookPage() {
       const image = photo.bitmap;
       const frame = 15;
       const boxWidth = cellWidth - frame * 2;
-      const boxHeight = cellHeight - 58;
+      const boxHeight = cellHeight - 34;
       const scale = Math.max(boxWidth / image.naturalWidth, boxHeight / image.naturalHeight);
       const drawWidth = image.naturalWidth * scale;
       const drawHeight = image.naturalHeight * scale;
@@ -254,12 +281,6 @@ export default function ScrapbookPage() {
       context.clip();
       context.drawImage(image, -drawWidth / 2, -cellHeight / 2 + frame + (boxHeight - drawHeight) / 2, drawWidth, drawHeight);
       context.restore();
-      context.fillStyle = selectedTheme.ink;
-      context.textAlign = 'center';
-      context.textBaseline = 'middle';
-      context.font = 'italic 15px Georgia, serif';
-      const caption = photo.file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').slice(0, 27) || `memory no. ${index + 1}`;
-      context.fillText(caption, 0, cellHeight / 2 - 21, cellWidth - 34);
       // Washi tape across the top edge of each photo.
       context.globalAlpha = 0.76;
       context.fillStyle = [selectedTheme.wash, '#e8d28e', '#b7c9b1', '#d79ba5'][index % 4];
@@ -269,7 +290,7 @@ export default function ScrapbookPage() {
       context.globalAlpha = 1;
       context.restore();
     });
-  }, [photos, theme, title, ready, layout, photoShape]);
+  }, [photos, theme, title, ready, layout]);
 
   const handleFiles = (event) => {
     const selected = Array.from(event.target.files || []);
@@ -307,8 +328,7 @@ export default function ScrapbookPage() {
         <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleFiles} className="visually-hidden" />
         <button type="button" className="button button-secondary" onClick={() => inputRef.current?.click()}>{photos.length ? 'Ganti foto' : 'Unggah foto'}</button>
         {photos.length > 0 && <div className="carousel-file-list">{photos.map((photo, index) => <div className="carousel-file-row" key={`${photo.file.name}-${index}`}><img src={photo.url} alt="" /><span>{photo.file.name}</span></div>)}</div>}
-        <fieldset className="carousel-layout-options scrapbook-layout-options"><legend>Pilih susunan foto</legend>{LAYOUTS.map((item) => <label key={item.id} className={layout === item.id ? 'selected' : ''}><input type="radio" name="scrapbook-layout" value={item.id} checked={layout === item.id} onChange={() => setLayout(item.id)} /><span>{item.icon}</span><b>{item.name}</b><small>{item.hint}</small></label>)}</fieldset>
-        <fieldset className="scrapbook-shape-options"><legend>Bentuk potongan foto</legend><div>{PHOTO_SHAPES.map((item) => <button key={item.id} type="button" className={photoShape === item.id ? 'selected' : ''} onClick={() => setPhotoShape(item.id)} aria-pressed={photoShape === item.id}><span className={`shape-preview shape-${item.id}`} aria-hidden="true">{item.icon}</span><b>{item.name}</b><small>{item.hint}</small></button>)}</div></fieldset>
+        <fieldset className="scrapbook-design-options"><legend>Pilih template scrapbook</legend><div>{LAYOUTS.map((item) => <button key={item.id} type="button" className={layout === item.id ? 'selected' : ''} onClick={() => setLayout(item.id)} aria-pressed={layout === item.id}><span className={`design-preview design-${item.id}`} aria-hidden="true"><i /><i /><i /></span><b>{item.name}</b><small>{item.hint}</small></button>)}</div></fieldset>
         <label className="mockup-title-field"><span className="mockup-label">Judul halaman</span><input value={title} maxLength={32} onChange={(event) => setTitle(event.target.value)} /></label>
         <div className="carousel-background-picker"><span className="mockup-label">Pilih gaya scrapbook</span><div className="scrapbook-themes">{THEMES.map((item, index) => <button key={item.name} type="button" className={`scrapbook-theme ${theme === index ? 'active' : ''}`} onClick={() => setTheme(index)} aria-pressed={theme === index}><span className="scrapbook-theme-paper" style={{ backgroundColor: item.color, color: item.ink }}><i>{item.motifs[0]}</i><i>{item.motifs[1]}</i><i>{item.motifs[2]}</i></span><b>{item.name}</b></button>)}</div></div>
         {error && <p className="message message-error" role="alert">{error}</p>}
