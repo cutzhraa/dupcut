@@ -41,12 +41,12 @@ export default function MorePage() {
               <span className="picker-action">Segera hadir <span aria-hidden="true">⏳</span></span>
             </Link>
 
-            {/* 3. Menu Photobox Grid (Segera Hadir) */}
-            <Link to="/more" onClick={(e) => { e.preventDefault(); alert('Fitur Photobox Grid segera hadir!'); }} className="picker-card" style={{ textDecoration: 'none', color: 'inherit', opacity: 0.85 }}>
-              <span className="picker-icon folder-icon" aria-hidden="true">▱</span>
-              <span className="picker-title">Photobox & Grid</span>
-              <span className="picker-hint">Gabungkan foto jadi kolase strip & grid estetik</span>
-              <span className="picker-action">Segera hadir <span aria-hidden="true">⏳</span></span>
+            {/* Scrapbook page generator */}
+            <Link to="/scrapbook" className="picker-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <span className="picker-icon folder-icon" aria-hidden="true">✂</span>
+              <span className="picker-title">Scrapbook Foto</span>
+              <span className="picker-hint">Unggah foto dan rangkai jadi halaman kenangan estetik</span>
+              <span className="picker-action">Mulai merangkai <span aria-hidden="true">→</span></span>
             </Link>
 
             <Link to="/convert" className="picker-card" style={{ textDecoration: 'none', color: 'inherit' }}>
