@@ -5,7 +5,7 @@ const MAX_PHOTOS = 12;
 const LAYOUTS = [
   { id: 'grid', name: 'Grid rapi', hint: 'Kotak seimbang', icon: '▦' },
   { id: 'collage', name: 'Kolase', hint: 'Satu foto utama', icon: '▧' },
-  { id: 'scatter', name: 'Scrapbook', hint: 'Miring & playful', icon: '✳' },
+  { id: 'scatter', name: 'Scrapbook', hint: 'Sobek, oval & tumpuk', icon: '✳' },
 ];
 const THEMES = [
   { name: 'Vintage journal', color: '#ead9b9', ink: '#594532', accent: '#a75f43', motifs: ['✿', '❧', '✦', '◉'], wash: '#b88b53' },
@@ -14,6 +14,39 @@ const THEMES = [
   { name: 'Blue letters', color: '#d9e3e8', ink: '#40596b', accent: '#66839a', motifs: ['✦', '✉', '❧', '⋆'], wash: '#91adba' },
   { name: 'Cottage brown', color: '#d8c2a3', ink: '#493629', accent: '#876347', motifs: ['❧', '✿', '✦', '♧'], wash: '#806044' },
 ];
+
+function traceTornEdge(context, x, y, width, height, seed = 0, roughness = 5) {
+  const jitter = (step, edge) => Math.sin((step + 1) * 2.37 + seed * 8.1 + edge * 4.3) * roughness;
+  context.beginPath();
+  context.moveTo(x + jitter(0, 0), y + jitter(0, 1));
+  const horizontalSteps = Math.max(8, Math.ceil(width / 16));
+  const verticalSteps = Math.max(8, Math.ceil(height / 16));
+  for (let step = 1; step <= horizontalSteps; step += 1) context.lineTo(x + (width * step) / horizontalSteps, y + jitter(step, 1));
+  for (let step = 1; step <= verticalSteps; step += 1) context.lineTo(x + width + jitter(step, 2), y + (height * step) / verticalSteps);
+  for (let step = 1; step <= horizontalSteps; step += 1) context.lineTo(x + width - (width * step) / horizontalSteps, y + height + jitter(step, 3));
+  for (let step = 1; step <= verticalSteps; step += 1) context.lineTo(x + jitter(step, 4), y + height - (height * step) / verticalSteps);
+  context.closePath();
+}
+
+function tracePhotoWindow(context, shape, x, y, width, height, seed) {
+  if (shape === 'oval') {
+    context.beginPath();
+    context.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+  } else if (shape === 'arch') {
+    context.beginPath();
+    context.moveTo(x, y + height);
+    context.lineTo(x, y + width / 2);
+    context.quadraticCurveTo(x, y, x + width / 2, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + width / 2);
+    context.lineTo(x + width, y + height);
+    context.closePath();
+  } else if (shape === 'torn') {
+    traceTornEdge(context, x, y, width, height, seed, 4);
+  } else {
+    context.beginPath();
+    context.ellipse(x + width / 2, y + height / 2, width * .47, height * .47, 0, 0, Math.PI * 2);
+  }
+}
 
 export default function ScrapbookPage() {
   const [photos, setPhotos] = useState([]);
@@ -83,16 +116,20 @@ export default function ScrapbookPage() {
         tiles.push({ x: 660 + (rowWidth === smallWidth ? (2 * smallWidth + gap - rowWidth) / 2 : (sideIndex % sideColumns) * (smallWidth + gap)), y: top + row * (smallHeight + gap), width: smallWidth, height: smallHeight, tilt: [-0.025, 0.03, -0.015, 0.02][index % 4] });
       }
     } else {
-      const columns = photos.length <= 2 ? photos.length : photos.length <= 6 ? 2 : 3;
-      const rows = Math.ceil(photos.length / columns);
-      const cellWidth = columns === 1 ? 650 : columns === 2 ? 440 : 330;
-      const cellHeight = columns === 2 ? 350 : 370;
-      height = top + rows * (cellHeight + gap) + 70;
+      // Uneven paper cutouts overlap like a handmade journal page instead of sitting in a table.
+      const rowCount = Math.ceil(photos.length / 3);
+      height = top + Math.max(rowCount * 330, photos.length < 3 ? 510 : 0) + 100;
+      const xPositions = [104, 416, 743];
+      const widths = [352, 286, 365];
+      const heights = [354, 286, 374];
+      const yOffsets = [0, 48, -13];
+      const rotations = [-0.055, 0.074, -0.031, 0.062, -0.068, 0.038, 0.024, -0.045, 0.057];
       tiles = photos.map((_, index) => {
-        const row = Math.floor(index / columns);
-        const rowCount = Math.min(columns, photos.length - row * columns);
-        const rowWidth = rowCount * cellWidth + (rowCount - 1) * gap;
-        return { x: (width - rowWidth) / 2 + (index % columns) * (cellWidth + gap), y: top + row * (cellHeight + gap), width: cellWidth, height: cellHeight, tilt: [-0.055, 0.045, -0.025, 0.06, -0.04, 0.025][index % 6] };
+        const column = index % 3;
+        const row = Math.floor(index / 3);
+        if (photos.length === 1) return { x: 340, y: top, width: 520, height: 510, tilt: -0.025 };
+        if (photos.length === 2) return { x: index === 0 ? 205 : 580, y: top + (index ? 65 : 0), width: 390, height: 430, tilt: rotations[index] };
+        return { x: xPositions[column], y: top + row * 310 + yOffsets[column], width: widths[column], height: heights[(index + row) % heights.length], tilt: rotations[index % rotations.length] };
       });
     }
     const selectedTheme = THEMES[theme];
@@ -176,19 +213,31 @@ export default function ScrapbookPage() {
       context.shadowColor = 'rgba(65, 48, 32, .22)';
       context.shadowBlur = 18;
       context.shadowOffsetY = 8;
+      const torn = layout === 'scatter';
+      const outerX = -cellWidth / 2;
+      const outerY = -cellHeight / 2;
       context.fillStyle = '#fffdf8';
-      context.fillRect(-cellWidth / 2, -cellHeight / 2, cellWidth, cellHeight);
+      if (torn) {
+        traceTornEdge(context, outerX, outerY, cellWidth, cellHeight, index, 6);
+        context.fill();
+      } else {
+        context.fillRect(outerX, outerY, cellWidth, cellHeight);
+      }
       context.shadowColor = 'transparent';
       const image = photo.bitmap;
       const frame = 15;
       const boxWidth = cellWidth - frame * 2;
       const boxHeight = cellHeight - 58;
+      const photoShape = layout === 'scatter' ? ['arch', 'torn', 'oval', 'arch', 'torn', 'oval'][index % 6] : 'torn';
       const scale = Math.max(boxWidth / image.naturalWidth, boxHeight / image.naturalHeight);
       const drawWidth = image.naturalWidth * scale;
       const drawHeight = image.naturalHeight * scale;
       context.save();
-      context.beginPath();
-      context.rect(-boxWidth / 2, -cellHeight / 2 + frame, boxWidth, boxHeight);
+      if (torn) tracePhotoWindow(context, photoShape, -boxWidth / 2, -cellHeight / 2 + frame, boxWidth, boxHeight, index + 31);
+      else {
+        context.beginPath();
+        context.rect(-boxWidth / 2, -cellHeight / 2 + frame, boxWidth, boxHeight);
+      }
       context.clip();
       context.drawImage(image, -drawWidth / 2, -cellHeight / 2 + frame + (boxHeight - drawHeight) / 2, drawWidth, drawHeight);
       context.restore();
@@ -239,7 +288,7 @@ export default function ScrapbookPage() {
 
   return <div className="mockup-page"><main className="shell">
     <header className="topbar"><div className="brand"><img src="/images/dupcut.png" alt="" style={{ width: 28, height: 28, borderRadius: 6 }} /><span>dupcut</span></div><span className="privacy-pill"><span /> Privat di perangkat kamu</span></header>
-    <section className="intro"><p className="eyebrow">SCRAPBOOK DIGITAL</p><h1>Rangkai momen,<br /><span>jadi halaman kenangan.</span></h1><p className="intro-copy">Unggah foto-fotomu dan ubah jadi scrapbook hangat dengan bingkai, washi tape, dan kertas warna pilihan.</p></section>
+    <section className="intro"><p className="eyebrow">SCRAPBOOK DIGITAL</p><h1>Rangkai momen,<br /><span>jadi halaman kenangan.</span></h1><p className="intro-copy">Potong foto jadi bentuk lengkung dan sobekan kertas, susun bertumpuk, lalu hias halamanmu dengan elemen scrapbook.</p></section>
     <section className="carousel-workspace scrapbook-workspace" aria-label="Pembuat scrapbook">
       <div className="carousel-controls"><div className="carousel-section-title"><span className="picker-icon" aria-hidden="true">✂</span><div><strong>Mulai merangkai</strong><small>Maksimal {MAX_PHOTOS} foto · diproses di perangkat</small></div></div>
         <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleFiles} className="visually-hidden" />
@@ -253,6 +302,6 @@ export default function ScrapbookPage() {
       </div>
       <div className="carousel-preview"><div className="mockup-preview-heading"><p className="mockup-label">Pratinjau scrapbook</p>{photos.length > 0 && <span>{photos.length} foto</span>}</div>{photos.length ? <div className="carousel-canvas-scroll"><canvas ref={canvasRef} aria-label="Pratinjau scrapbook" /></div> : <div className="mockup-empty"><span>✂</span><strong>Halaman kenanganmu tampil di sini</strong><small>Unggah beberapa foto untuk mulai menyusun.</small></div>}</div>
     </section>
-    <footer className="footnotes"><div className="footnote"><span className="footnote-number">01</span><p><strong>Gaya scrapbook</strong><br />Foto miring, bingkai putih, dan aksen pita.</p></div><div className="footnote"><span className="footnote-number">02</span><p><strong>PNG resolusi tinggi</strong><br />Simpan hasil dan bagikan dengan mudah.</p></div><div className="footnote"><span className="footnote-number">03</span><p><strong>Privasi terjaga</strong><br />Foto tidak diunggah ke server.</p></div></footer>
+    <footer className="footnotes"><div className="footnote"><span className="footnote-number">01</span><p><strong>Potongan unik</strong><br />Bentuk lengkung, oval, dan sobekan kertas.</p></div><div className="footnote"><span className="footnote-number">02</span><p><strong>Susunan bertumpuk</strong><br />Ukuran foto dan kemiringannya bervariasi.</p></div><div className="footnote"><span className="footnote-number">03</span><p><strong>Privasi terjaga</strong><br />Foto tidak diunggah ke server.</p></div></footer>
   </main><footer className="app-footer"><div className="footer-container"><div className="footer-top"><div className="footer-brand-info"><div className="footer-logo"><img className="footer-logo-mark" src="/dupcut.png" alt="" /><span>dupcut</span></div><p className="footer-desc">Alat kreatif yang mudah, aman, dan berjalan langsung di browser kamu.</p></div><SocialLinks /></div><div className="footer-divider" /><div className="footer-bottom"><p className="footer-copyright">© 2026 DupCut. Semua hak dilindungi.</p></div></div></footer></div>;
 }
