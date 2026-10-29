@@ -7,16 +7,17 @@ const LAYOUTS = [
   { id: 'collage', name: 'Kolase', hint: 'Satu foto utama', icon: '▧' },
   { id: 'scatter', name: 'Scrapbook', hint: 'Miring & playful', icon: '✳' },
 ];
-const PAPERS = [
-  { name: 'Krem', color: '#f4ead8', ink: '#554a3c' },
-  { name: 'Pink', color: '#f5dfe2', ink: '#684b50' },
-  { name: 'Mint', color: '#dce9db', ink: '#455c4a' },
-  { name: 'Biru', color: '#dce8ef', ink: '#455969' },
+const THEMES = [
+  { name: 'Vintage journal', color: '#ead9b9', ink: '#594532', accent: '#a75f43', motifs: ['✿', '❧', '✦', '◉'], wash: '#b88b53' },
+  { name: 'Flower garden', color: '#e6ead8', ink: '#465b48', accent: '#b36b70', motifs: ['✿', '❀', '❧', '✽'], wash: '#8caa80' },
+  { name: 'Pink memories', color: '#f3dce0', ink: '#704b55', accent: '#bc7187', motifs: ['♡', '✿', '୨୧', '✦'], wash: '#d79ba5' },
+  { name: 'Blue letters', color: '#d9e3e8', ink: '#40596b', accent: '#66839a', motifs: ['✦', '✉', '❧', '⋆'], wash: '#91adba' },
+  { name: 'Cottage brown', color: '#d8c2a3', ink: '#493629', accent: '#876347', motifs: ['❧', '✿', '✦', '♧'], wash: '#806044' },
 ];
 
 export default function ScrapbookPage() {
   const [photos, setPhotos] = useState([]);
-  const [paper, setPaper] = useState(0);
+  const [theme, setTheme] = useState(0);
   const [layout, setLayout] = useState('scatter');
   const [title, setTitle] = useState('little moments');
   const [ready, setReady] = useState(false);
@@ -94,30 +95,77 @@ export default function ScrapbookPage() {
         return { x: (width - rowWidth) / 2 + (index % columns) * (cellWidth + gap), y: top + row * (cellHeight + gap), width: cellWidth, height: cellHeight, tilt: [-0.055, 0.045, -0.025, 0.06, -0.04, 0.025][index % 6] };
       });
     }
-    const selectedPaper = PAPERS[paper];
+    const selectedTheme = THEMES[theme];
+    const selectedPaper = selectedTheme;
     canvas.width = width * 2;
     canvas.height = height * 2;
     context.scale(2, 2);
     context.fillStyle = selectedPaper.color;
     context.fillRect(0, 0, width, height);
-    // Subtle paper grain and a hand-drawn page border.
-    context.globalAlpha = 0.09;
-    context.fillStyle = '#8c7358';
-    for (let y = 15; y < height; y += 28) for (let x = (y % 2) * 9; x < width; x += 28) context.fillRect(x, y, 1.5, 1.5);
+    // Layered paper washes, grain, and a hand-drawn stitched edge.
+    const wash = context.createRadialGradient(width * .82, height * .18, 10, width * .82, height * .18, width * .72);
+    wash.addColorStop(0, `${selectedTheme.wash}30`);
+    wash.addColorStop(1, `${selectedPaper.color}00`);
+    context.fillStyle = wash;
+    context.fillRect(0, 0, width, height);
+    context.globalAlpha = 0.12;
+    context.fillStyle = selectedTheme.ink;
+    for (let y = 15; y < height; y += 19) for (let x = (y % 2) * 9; x < width; x += 19) context.fillRect(x, y, 1, 1);
     context.globalAlpha = 1;
-    context.strokeStyle = `${selectedPaper.ink}55`;
-    context.lineWidth = 2;
-    context.setLineDash([4, 9]);
-    context.strokeRect(30, 30, width - 60, height - 60);
+    context.strokeStyle = `${selectedPaper.ink}70`;
+    context.lineWidth = 1.5;
+    context.setLineDash([2, 9]);
+    context.strokeRect(44, 42, width - 88, height - 84);
     context.setLineDash([]);
     context.fillStyle = selectedPaper.ink;
     context.textAlign = 'center';
-    context.font = 'italic 64px Georgia, serif';
-    context.fillText(title || 'little moments', width / 2, 118, width - 100);
-    context.font = '20px Georgia, serif';
+    context.font = 'italic 66px "Brush Script MT", "Segoe Script", cursive';
+    context.fillText(title || 'little moments', width / 2, 112, width - 140);
+    context.font = '18px Georgia, serif';
     context.globalAlpha = 0.72;
-    context.fillText('✦  memories collected with love  ✦', width / 2, 158);
+    context.fillText('—  memories collected with love  —', width / 2, 151);
     context.globalAlpha = 1;
+
+    // Tiny printed collage scraps: ticket, postage stamp, and pressed-flower motifs.
+    context.save();
+    context.translate(width - 146, 110);
+    context.rotate(0.11);
+    context.fillStyle = '#fff9e8';
+    context.fillRect(-43, -34, 86, 67);
+    context.strokeStyle = `${selectedTheme.accent}88`;
+    context.setLineDash([2, 3]);
+    context.strokeRect(-37, -28, 74, 55);
+    context.setLineDash([]);
+    context.fillStyle = selectedTheme.accent;
+    context.font = '12px Georgia, serif';
+    context.fillText('POST', 0, 5);
+    context.restore();
+
+    const accents = [];
+    for (let index = 0; index < photos.length * 2 + 7; index += 1) {
+      const x = 92 + ((index * 197 + 61) % (width - 184));
+      const y = top - 15 + ((index * 113 + 37) % Math.max(90, height - top - 45));
+      if (tiles.some((tile) => x > tile.x - 24 && x < tile.x + tile.width + 24 && y > tile.y - 24 && y < tile.y + tile.height + 24)) continue;
+      accents.push({ x, y, motif: selectedTheme.motifs[index % selectedTheme.motifs.length], angle: (index % 5 - 2) * 0.13, size: 24 + (index % 3) * 9 });
+    }
+    accents.forEach(({ x, y, motif, angle, size }, index) => {
+      context.save();
+      context.translate(x, y);
+      context.rotate(angle);
+      if (index % 3 === 0) {
+        context.fillStyle = index % 2 ? '#fff5d6' : '#f7e9dc';
+        context.beginPath();
+        context.arc(0, 0, size * .7, 0, Math.PI * 2);
+        context.fill();
+      }
+      context.fillStyle = index % 2 ? selectedTheme.accent : selectedTheme.ink;
+      context.globalAlpha = .83;
+      context.font = `${size}px Georgia, serif`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(motif, 0, 0);
+      context.restore();
+    });
 
     photos.forEach((photo, index) => {
       const tile = tiles[index];
@@ -144,16 +192,22 @@ export default function ScrapbookPage() {
       context.clip();
       context.drawImage(image, -drawWidth / 2, -cellHeight / 2 + frame + (boxHeight - drawHeight) / 2, drawWidth, drawHeight);
       context.restore();
+      context.fillStyle = selectedTheme.ink;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.font = 'italic 15px Georgia, serif';
+      const caption = photo.file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').slice(0, 27) || `memory no. ${index + 1}`;
+      context.fillText(caption, 0, cellHeight / 2 - 21, cellWidth - 34);
       // Washi tape across the top edge of each photo.
       context.globalAlpha = 0.76;
-      context.fillStyle = ['#e9b9a9', '#e8d28e', '#b7c9b1', '#b9cad8'][index % 4];
+      context.fillStyle = [selectedTheme.wash, '#e8d28e', '#b7c9b1', '#d79ba5'][index % 4];
       context.translate(0, -cellHeight / 2 + 8);
       context.rotate(-0.08);
       context.fillRect(-47, -8, 94, 18);
       context.globalAlpha = 1;
       context.restore();
     });
-  }, [photos, paper, title, ready, layout]);
+  }, [photos, theme, title, ready, layout]);
 
   const handleFiles = (event) => {
     const selected = Array.from(event.target.files || []);
@@ -193,7 +247,7 @@ export default function ScrapbookPage() {
         {photos.length > 0 && <div className="carousel-file-list">{photos.map((photo, index) => <div className="carousel-file-row" key={`${photo.file.name}-${index}`}><img src={photo.url} alt="" /><span>{photo.file.name}</span></div>)}</div>}
         <fieldset className="carousel-layout-options scrapbook-layout-options"><legend>Pilih susunan foto</legend>{LAYOUTS.map((item) => <label key={item.id} className={layout === item.id ? 'selected' : ''}><input type="radio" name="scrapbook-layout" value={item.id} checked={layout === item.id} onChange={() => setLayout(item.id)} /><span>{item.icon}</span><b>{item.name}</b><small>{item.hint}</small></label>)}</fieldset>
         <label className="mockup-title-field"><span className="mockup-label">Judul halaman</span><input value={title} maxLength={32} onChange={(event) => setTitle(event.target.value)} /></label>
-        <div className="carousel-background-picker"><span className="mockup-label">Warna kertas</span><div className="mockup-swatches">{PAPERS.map((item, index) => <button key={item.name} type="button" title={item.name} aria-label={`Kertas ${item.name}`} className={paper === index ? 'active' : ''} style={{ background: item.color }} onClick={() => setPaper(index)} />)}</div></div>
+        <div className="carousel-background-picker"><span className="mockup-label">Pilih gaya scrapbook</span><div className="scrapbook-themes">{THEMES.map((item, index) => <button key={item.name} type="button" className={`scrapbook-theme ${theme === index ? 'active' : ''}`} onClick={() => setTheme(index)} aria-pressed={theme === index}><span className="scrapbook-theme-paper" style={{ backgroundColor: item.color, color: item.ink }}><i>{item.motifs[0]}</i><i>{item.motifs[1]}</i><i>{item.motifs[2]}</i></span><b>{item.name}</b></button>)}</div></div>
         {error && <p className="message message-error" role="alert">{error}</p>}
         <button className="button button-primary mockup-download" type="button" disabled={!photos.length || !ready} onClick={download}>Unduh scrapbook PNG</button>
       </div>
